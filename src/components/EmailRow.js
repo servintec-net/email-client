@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { getInitials, getTimeLabel, getAvatarGradient } from "../utils/helper";
-import { API_BASE } from "../utils/constants";
-import { getAuthHeaders } from "../utils/auth";
 
 const EmailRow = React.memo(function EmailRow({
   msg,

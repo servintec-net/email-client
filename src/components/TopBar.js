@@ -44,7 +44,6 @@ const TopBar = React.memo(function TopBar({
   onManageMailboxes,
   onSignOut,
   onChangePassword,
-  selectedMailbox,
   mailboxDisplayNamesCache,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -181,7 +180,7 @@ const TopBar = React.memo(function TopBar({
               aria-label="Profile menu"
             >
               <img
-                src="/avatar.jpg"
+                src="/avatar.png"
                 alt=""
                 style={{
                   width: "100%",

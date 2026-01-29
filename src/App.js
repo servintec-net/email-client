@@ -21,7 +21,7 @@ function App() {
   const [mailboxesTotal, setMailboxesTotal] = useState(null);
   const [mailboxesHasMore, setMailboxesHasMore] = useState(false);
   const [mailboxesNextOffset, setMailboxesNextOffset] = useState(null);
-  const [mailboxesLoading, setMailboxesLoading] = useState(false);
+  const [, setMailboxesLoading] = useState(false);
   const [mailboxesLoadingMore, setMailboxesLoadingMore] = useState(false);
   const [selectedMailboxId, setSelectedMailboxId] = useState(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
@@ -699,7 +699,7 @@ function App() {
         await refreshFolderCounts();
       }
     },
-    [authToken, selectedMailboxId, TOGGLE_ONLY, allFolderPaths, selectedFolderPath, refreshFolderCounts, getAuthHeaders]
+    [authToken, selectedMailboxId, TOGGLE_ONLY, allFolderPaths, selectedFolderPath, refreshFolderCounts]
   );
 
   // ✅ Mark All As Read (used by FolderTreeView right-click)
@@ -791,7 +791,7 @@ function App() {
         await refreshFolderCounts();
       }
     },
-    [authToken, selectedMailboxId, TOGGLE_ONLY, allFolderPaths, selectedFolderPath, refreshFolderCounts, getAuthHeaders]
+    [authToken, selectedMailboxId, TOGGLE_ONLY, allFolderPaths, selectedFolderPath, refreshFolderCounts]
   );
 
   // Initialize auth on mount (mailboxes are loaded by the "Reload mailboxes when auth token is available" effect)
