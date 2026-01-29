@@ -32,12 +32,12 @@ const RightPanel = React.memo(function RightPanel({
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
-    padding: "6px 10px",
+    padding: "4px 8px",
     borderRadius: 999,
-    border: "1px solid rgba(0,0,0,0.10)",
+    border: "1px solid rgba(0,0,0,0.20)",
     background: "rgba(255,255,255,0.65)",
-    color: "rgba(0,0,0,0.70)",
-    fontSize: 12.5,
+    color: "rgba(0,0,0,0.80)",
+    fontSize: 12,
     fontWeight: 700,
     userSelect: "none",
     whiteSpace: "nowrap",
@@ -50,11 +50,11 @@ const RightPanel = React.memo(function RightPanel({
     padding: "6px 10px",
     borderRadius: 12,
     fontWeight: 600,
+    fontSize: 12,
     cursor: "pointer",
     display: "inline-flex",
     alignItems: "center",
     gap: 6,
-    transition: "transform 120ms ease, background 120ms ease",
   };
 
   return (
@@ -64,7 +64,7 @@ const RightPanel = React.memo(function RightPanel({
           <div style={{ minWidth: 0, flex: 1 }}>
             <div
               style={{
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: 600,
                 lineHeight: 1.2,
                 letterSpacing: -0.2,
@@ -78,7 +78,7 @@ const RightPanel = React.memo(function RightPanel({
 
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span style={chip}>
-                <span className="material-icons" style={{ fontSize: 16, opacity: 0.7 }}>
+                <span className="material-icons" style={{ fontSize: 13, opacity: 0.7 }}>
                   schedule
                 </span>
                 {formatFullDateTime(previewEmail.receivedDateTime)}
@@ -93,7 +93,7 @@ const RightPanel = React.memo(function RightPanel({
                     color: "#0b5fff",
                   }}
                 >
-                  <span className="material-icons" style={{ fontSize: 16 }}>
+                  <span className="material-icons" style={{ fontSize: 14 }}>
                     mark_email_unread
                   </span>
                   Unread
@@ -101,7 +101,7 @@ const RightPanel = React.memo(function RightPanel({
               )}
               {previewEmail.hasAttachments && (
                 <span style={chip}>
-                  <span className="material-icons" style={{ fontSize: 16, opacity: 0.7 }}>
+                  <span className="material-icons" style={{ fontSize: 15, opacity: 0.7 }}>
                     attach_file
                   </span>
                   Attachments
@@ -112,15 +112,15 @@ const RightPanel = React.memo(function RightPanel({
           <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
             <div
               style={{
-                width: 50,
-                height: 50,
+                width: 48,
+                height: 48,
                 borderRadius: 999,
                 background: senderGradient,
                 display: "grid",
                 placeItems: "center",
                 fontWeight: 800,
                 fontSize: 18,
-                color: "rgba(0,0,0,0.70)",
+                color: "rgba(0,0,0,0.80)",
                 boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.35)",
                 flexShrink: 0,
               }}
@@ -137,7 +137,7 @@ const RightPanel = React.memo(function RightPanel({
             <div
               style={{
                 fontSize: 13,
-                fontWeight: 800,
+                fontWeight: 700,
                 color: "rgba(0,0,0,0.76)",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
@@ -147,7 +147,7 @@ const RightPanel = React.memo(function RightPanel({
               title={`${senderName} <${fromAddr?.address || ""}>`}
             >
               {senderName}{" "}
-              <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(0,0,0,0.60)" }}>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "rgba(0,0,0,0.70)" }}>
                 &lt;{fromAddr?.address}&gt;
               </span>
             </div>
@@ -161,7 +161,7 @@ const RightPanel = React.memo(function RightPanel({
               onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
               title="Copy Email Address"
             >
-              <span className="material-icons" style={{ fontSize: 18, opacity: 0.85 }}>
+              <span className="material-icons" style={{ fontSize: 14, opacity: 0.85 }}>
                 content_copy
               </span>
               Copy
@@ -173,13 +173,13 @@ const RightPanel = React.memo(function RightPanel({
       {threadEmails.length === 0 && (
         <div style={{ marginTop: 12, ...surface, padding: 16, position: "relative", overflow: "hidden" }}>
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 10 }}>
-            <div style={{ fontSize: 12.5, fontWeight: 900, color: "rgba(0,0,0,0.55)" }}>Preview</div>
-            <div style={{ fontSize: 12, color: "rgba(0,0,0,0.50)", fontWeight: 700 }}>Showing bodyPreview</div>
+            <div style={{ fontSize: 12.5, fontWeight: 900, color: "rgba(0,0,0,0.75)" }}>Preview</div>
+            <div style={{ fontSize: 12, color: "rgba(0,0,0,0.50)", fontWeight: 700 }}>Showing Email Preview...</div>
           </div>
 
           <div
             style={{
-              fontSize: 14,
+              fontSize: 13,
               lineHeight: 1.6,
               color: "rgba(0,0,0,0.78)",
               whiteSpace: "pre-wrap",
@@ -219,7 +219,7 @@ const RightPanel = React.memo(function RightPanel({
               borderRadius: 12,
             }}
           >
-            <div style={{ fontSize: 13, fontWeight: 700, color: "rgba(0,0,0,0.60)" }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.70)" }}>
               Open thread to see the full conversation ↓
             </div>
 

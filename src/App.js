@@ -829,10 +829,18 @@ function App() {
     loadingMoreRef.current = loadingMore;
   }, [hasMoreEmails, loadingMore]);
 
-  // Load emails when mailbox, folder, or label changes
+  // Load emails when mailbox, folder, or label changes — clear list and show loading, then fetch
   useEffect(() => {
     if (!authToken || !selectedMailboxId) return;
     if (leftPaneTab === "labels" && !selectedLabel) return;
+    setEmails([]);
+    setSelectedEmailId(null);
+    setPreviewEmail(null);
+    setThreadEmails([]);
+    setHasMoreEmails(false);
+    hasMoreEmailsRef.current = false;
+    setEmailSkip(0);
+    setLoadingList(true);
     loadEmailsRef.current();
   }, [authToken, selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab]);
 

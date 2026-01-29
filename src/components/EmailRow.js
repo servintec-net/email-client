@@ -17,10 +17,14 @@ const EmailRow = React.memo(function EmailRow({
   const dateLabel = getTimeLabel(msg.receivedDateTime);
   const gradient = getAvatarGradient(senderName);
   const categories = Array.isArray(msg.categories) ? msg.categories.filter(Boolean) : [];
-  const formatCategory = (cat) => {
-    if (cat === "JobBoard: Other Job Board") return "Other";
-    return cat;
-  };
+  const jobBoardRaw = categories.find((c) => String(c).startsWith("JobBoard: "));
+  const roleRaw = categories.find((c) => String(c).startsWith("Role: "));
+  const jobBoardDisplay = jobBoardRaw
+    ? (jobBoardRaw.replace(/^JobBoard:\s*/, "") === "Other Job Board" ? "Other Board" : jobBoardRaw.replace(/^JobBoard:\s*/, ""))
+    : null;
+  const roleDisplay = roleRaw
+    ? (roleRaw.replace(/^Role:\s*/, "") === "Other" ? "Other Role" : roleRaw.replace(/^Role:\s*/, ""))
+    : null;
 
   const cardBg = isSelected
     ? "rgba(11,95,255,0.09)"
@@ -175,35 +179,46 @@ const EmailRow = React.memo(function EmailRow({
             {(msg.bodyPreview || "").trim()}
           </div>
 
-          {categories.length > 0 && (
+          {(jobBoardDisplay || roleDisplay) && (
             <div
               style={{
                 marginTop: 6,
                 display: "flex",
                 flexWrap: "wrap",
-                gap: 4,
+                gap: 6,
+                alignItems: "center",
               }}
             >
-              {categories.map((cat) => (
+              {jobBoardDisplay && (
                 <span
-                  key={cat}
                   style={{
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: 600,
-                    color: "rgba(11,95,255,0.9)",
-                    background: "rgba(11,95,255,0.10)",
-                    padding: "2px 6px",
-                    borderRadius: 4,
+                    color: "#c62828",
                     whiteSpace: "nowrap",
-                    maxWidth: 140,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
+                    maxWidth: 140,
                   }}
-                  title={formatCategory(cat)}
                 >
-                  {formatCategory(cat)}
+                  {jobBoardDisplay}
                 </span>
-              ))}
+              )}
+              {roleDisplay && (
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#1565c0",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: 140,
+                  }}
+                >
+                  {roleDisplay}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -225,6 +240,7 @@ const EmailRow = React.memo(function EmailRow({
             minWidth: 200,
           }}
           onMouseDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
         >
           <button
             onClick={() => handleAction("reply")}
