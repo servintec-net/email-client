@@ -1,6 +1,6 @@
 // App.js
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { flattenFolderTree, getMailboxDisplayLabel } from "./utils/helper";
+import { flattenFolderTree, getMailboxDisplayLabel, formatFullDateTime } from "./utils/helper";
 import { FOLDER_TREE, API_BASE, WS_BASE, LABELS_CONFIG } from "./utils/constants";
 import { getAuthToken, setAuthToken, removeAuthToken, getAuthHeaders, getAuthHeadersWithToken } from "./utils/auth";
 
@@ -14,6 +14,7 @@ import RightPanel from "./components/RightPanel";
 import ReplyPanel from "./components/ReplyPanel";
 import Resizer from "./components/Resizer";
 import ChangePassword from "./components/ChangePassword";
+import GptPromptPage from "./components/GptPromptPage";
 
 function App() {
   // Auth state
@@ -29,6 +30,7 @@ function App() {
   const [loadingAuth, setLoadingAuth] = useState(true);
   const [showMailboxManagement, setShowMailboxManagement] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showGptPrompt, setShowGptPrompt] = useState(false);
 
   // Email state
   const [emails, setEmails] = useState([]);
@@ -60,6 +62,22 @@ function App() {
   const LIST_PANE_MAX = 600;
   const LIST_PANE_DEFAULT = 380;
   const PANE_WIDTHS_KEY = "emailLayoutPaneWidths";
+  const MAILBOX_ORDER_KEY = "emailLayoutMailboxOrder";
+  const SELECTED_EMAIL_KEY = "emailLayoutSelectedEmail";
+
+  const getSelectedEmailContextKey = (mailboxId, folderPath, label, isLabelsMode) =>
+    `${mailboxId}:${isLabelsMode && label ? `label:${label}` : folderPath || "inbox"}`;
+
+  const [mailboxOrderIds, setMailboxOrderIds] = useState(() => {
+    try {
+      const raw = localStorage.getItem(MAILBOX_ORDER_KEY);
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  });
 
   const [folderPaneWidth, setFolderPaneWidth] = useState(() => {
     try {
@@ -92,8 +110,41 @@ function App() {
         PANE_WIDTHS_KEY,
         JSON.stringify({ folderPaneWidth, listPaneWidth })
       );
-    } catch (_) {}
+    } catch (_) { }
   }, [folderPaneWidth, listPaneWidth]);
+
+  // Sync mailbox order when mailboxes list changes (e.g. after disconnect): remove missing ids, append new ones
+  useEffect(() => {
+    if (mailboxes.length === 0) return;
+    setMailboxOrderIds((prev) => {
+      const validIds = prev.filter((id) => mailboxes.some((mb) => mb.id === id));
+      let next = validIds.length > 0 ? validIds : mailboxes.map((mb) => mb.id);
+      mailboxes.forEach((mb) => {
+        if (!next.includes(mb.id)) next = [...next, mb.id];
+      });
+      return next;
+    });
+  }, [mailboxes]);
+
+  // Persist mailbox order when user reorders
+  useEffect(() => {
+    try {
+      localStorage.setItem(MAILBOX_ORDER_KEY, JSON.stringify(mailboxOrderIds));
+    } catch (_) { }
+  }, [mailboxOrderIds]);
+
+  const sortedMailboxes = useMemo(() => {
+    const order = mailboxOrderIds;
+    const byId = new Map(mailboxes.map((mb) => [mb.id, mb]));
+    const sorted = [];
+    for (const id of order) {
+      if (byId.has(id)) sorted.push(byId.get(id));
+    }
+    mailboxes.forEach((mb) => {
+      if (!order.includes(mb.id)) sorted.push(mb);
+    });
+    return sorted;
+  }, [mailboxes, mailboxOrderIds]);
 
   useEffect(() => {
     if (!previewEmail) setReplyToEmail(null);
@@ -432,9 +483,16 @@ function App() {
         hasMoreEmailsRef.current = more;
         setEmailSkip(data.skip || list.length);
 
-        // Only keep selected email if it still exists in the new list, otherwise clear selection
-        // Don't auto-select the first email when opening a folder
+        // Restore selection from localStorage for this context; if cached id not in list, set to null (cache is kept)
+        const contextKey = getSelectedEmailContextKey(selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab === "labels");
+        let cachedId = null;
+        try {
+          const raw = localStorage.getItem(SELECTED_EMAIL_KEY);
+          const stored = raw ? JSON.parse(raw) : {};
+          cachedId = stored[contextKey] ?? null;
+        } catch (_) {}
         const nextSelectedId =
+          (cachedId && list.some((m) => m.id === cachedId) && cachedId) ||
           (selectedEmailId && list.some((m) => m.id === selectedEmailId) && selectedEmailId) ||
           null;
 
@@ -513,8 +571,18 @@ function App() {
       setShowHistoryById({});
 
       setPreviewEmail(emails.find((m) => m.id === id) || null);
+
+      if (id != null && selectedMailboxId != null) {
+        const contextKey = getSelectedEmailContextKey(selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab === "labels");
+        try {
+          const raw = localStorage.getItem(SELECTED_EMAIL_KEY);
+          const stored = raw ? JSON.parse(raw) : {};
+          stored[contextKey] = id;
+          localStorage.setItem(SELECTED_EMAIL_KEY, JSON.stringify(stored));
+        } catch (_) {}
+      }
     },
-    [emails]
+    [emails, selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab]
   );
 
   // Handle email actions from context menu (mark read/unread, delete, move to inbox)
@@ -1029,6 +1097,17 @@ function App() {
     );
   }
 
+  // Show GPT prompt page
+  if (showGptPrompt) {
+    return (
+      <GptPromptPage
+        currentUser={currentUser}
+        authToken={authToken}
+        onBack={() => setShowGptPrompt(false)}
+      />
+    );
+  }
+
   // Show mailbox management page
   if (showMailboxManagement) {
     return (
@@ -1282,7 +1361,9 @@ function App() {
         />
         <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Select a mailbox</h2>
         <MailboxSelector
-          mailboxes={mailboxes}
+          mailboxes={sortedMailboxes}
+          orderIds={mailboxOrderIds}
+          onOrderChange={setMailboxOrderIds}
           selectedMailboxId={selectedMailboxId}
           onSelectMailbox={setSelectedMailboxId}
           onConnectNew={connectMailbox}
@@ -1306,7 +1387,9 @@ function App() {
       <TopBar
         currentUser={currentUser}
         selectedMailbox={selectedMailbox}
-        mailboxes={mailboxes}
+        mailboxes={sortedMailboxes}
+        mailboxOrderIds={mailboxOrderIds}
+        onMailboxOrderChange={setMailboxOrderIds}
         loadingList={loadingList}
         onRefresh={refreshInbox}
         onSelectMailbox={setSelectedMailboxId}
@@ -1314,6 +1397,7 @@ function App() {
         onManageMailboxes={() => setShowMailboxManagement(true)}
         onSignOut={handleSignOut}
         onChangePassword={() => setShowChangePassword(true)}
+        onGptPrompt={() => setShowGptPrompt(true)}
         mailboxDisplayNamesCache={mailboxDisplayNamesCache}
       />
 
@@ -1443,16 +1527,16 @@ function App() {
             background: "linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.01))",
           }}
         >
-          {/* Right pane toolbar — matches MessageListPane header height/style for aligned content */}
+          {/* Right pane toolbar — one line: icon + subject + clock + time when preview */}
           <div
             style={{
               flexShrink: 0,
               height: 40,
-              padding: "0 10px",
-              borderBottom: "1px solid rgba(0,0,0,0.08)",
+              padding: "0 14px",
+              borderBottom: "1px solid rgba(0,0,0,0.06)",
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: 10,
               minWidth: 0,
               background: "#fff",
               boxSizing: "border-box",
@@ -1460,7 +1544,7 @@ function App() {
           >
             <span
               className="material-icons-outlined"
-              style={{ fontSize: 18, color: "rgba(0,0,0,0.80)", flexShrink: 0 }}
+              style={{ fontSize: 20, color: "rgba(0,0,0,0.7)", flexShrink: 0 }}
               aria-hidden
             >
               {replyToEmail
@@ -1469,24 +1553,49 @@ function App() {
                   ? "mail"
                   : "mail_outline"}
             </span>
-            <div
-              style={{
-                fontSize: 12.5,
-                fontWeight: 700,
-                color: "rgba(0,0,0,0.78)",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                minWidth: 0,
-              }}
-              title={replyToEmail ? "Reply" : previewEmail ? (previewEmail.subject || "No subject") : "Preview"}
-            >
-              {replyToEmail
-                ? "Reply"
-                : previewEmail
-                  ? (previewEmail.subject || "No subject")
-                  : "Preview"}
-            </div>
+            {replyToEmail ? (
+              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.85)" }}>Reply</div>
+            ) : previewEmail ? (
+              <>
+                <div
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "rgba(0,0,0,0.88)",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    minWidth: 0,
+                    flex: 1,
+                  }}
+                  title={`${(previewEmail.subject || "").replace(/^\s*Re:\s*/i, "").trim() || "No subject"} — ${previewEmail.from?.emailAddress?.name || "Unknown Sender"} · ${formatFullDateTime(previewEmail.receivedDateTime)}`}
+                >
+                  {(previewEmail.subject || "").replace(/^\s*Re:\s*/i, "").trim() || "No subject"}
+                </div>
+                <span
+                  className="material-icons-outlined"
+                  style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", flexShrink: 0 }}
+                  aria-hidden
+                  title={formatFullDateTime(previewEmail.receivedDateTime)}
+                >
+                  schedule
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: "rgba(0,0,0,0.5)",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                  title={formatFullDateTime(previewEmail.receivedDateTime)}
+                >
+                  {formatFullDateTime(previewEmail.receivedDateTime)}
+                </span>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.85)" }}>Preview</div>
+            )}
           </div>
 
           {/* Content area — flex layout, no scroll here so empty state never shows scrollbar */}
@@ -1525,18 +1634,28 @@ function App() {
             )}
 
             {replyToEmail && (
-              <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <div style={{ flex: 1, minHeight: 0, overflow: "auto", scrollbarGutter: "stable" }}>
                 <ReplyPanel
                   replyToEmail={replyToEmail}
                   mailboxId={selectedMailboxId}
                   onClose={() => setReplyToEmail(null)}
-                  onSent={() => setReplyToEmail(null)}
+                  onSent={() => {
+                    const cid = replyToEmail?.conversationId;
+                    if (cid) {
+                      threadCacheRef.current.delete(cid);
+                      const refreshThenClose = () =>
+                        loadThread().then(() => setReplyToEmail(null));
+                      setTimeout(refreshThenClose, 400);
+                    } else {
+                      setReplyToEmail(null);
+                    }
+                  }}
                 />
               </div>
             )}
 
             {previewEmail && !replyToEmail && (
-              <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+              <div style={{ flex: 1, minHeight: 0, overflow: "auto", scrollbarGutter: "stable" }}>
                 <RightPanel
                   previewEmail={previewEmail}
                   threadEmails={threadEmails}

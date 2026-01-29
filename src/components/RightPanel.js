@@ -1,5 +1,4 @@
 import React from "react";
-import { getInitials, formatFullDateTime, getAvatarGradient } from "../utils/helper";
 import ThreadCard from "./ThreadCard";
 
 const RightPanel = React.memo(function RightPanel({
@@ -16,33 +15,12 @@ const RightPanel = React.memo(function RightPanel({
   mailboxEmail,
   authToken,
 }) {
-  const fromAddr = previewEmail.from?.emailAddress;
-  const senderName = fromAddr?.name || "Unknown Sender";
-  const senderInitials = getInitials(fromAddr);
-  const senderGradient = getAvatarGradient(senderName);
-
   const surface = {
     background: "rgba(255,255,255,0.85)",
     border: "1px solid rgba(0,0,0,0.06)",
     borderRadius: 14,
     boxShadow: "0 4px 20px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.03)",
     backdropFilter: "blur(12px)",
-  };
-
-  const chip = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 5,
-    padding: "3px 8px",
-    borderRadius: 8,
-    border: "1px solid rgba(0,0,0,0.10)",
-    background: "rgba(0,0,0,0.04)",
-    color: "rgba(0,0,0,0.72)",
-    fontSize: 11,
-    fontWeight: 600,
-    userSelect: "none",
-    whiteSpace: "nowrap",
-    letterSpacing: "0.01em",
   };
 
   const actionBtn = {
@@ -69,123 +47,6 @@ const RightPanel = React.memo(function RightPanel({
         minHeight: 0,
       }}
     >
-      {/* Compact header: subject + meta row */}
-      <div style={{ ...surface, padding: "14px 16px 12px" }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: "50%",
-              background: senderGradient,
-              display: "grid",
-              placeItems: "center",
-              fontWeight: 700,
-              fontSize: 14,
-              color: "rgba(0,0,0,0.75)",
-              boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.4)",
-              flexShrink: 0,
-            }}
-            title={senderName}
-          >
-            {senderInitials}
-          </div>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 15,
-                fontWeight: 600,
-                lineHeight: 1.35,
-                letterSpacing: "-0.01em",
-                color: "rgba(0,0,0,0.9)",
-                wordBreak: "break-word",
-                marginBottom: 8,
-              }}
-            >
-              {previewEmail.subject || "(No subject)"}
-            </h1>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-              <span
-                style={{
-                  fontSize: 12,
-                  color: "rgba(0,0,0,0.6)",
-                  fontWeight: 500,
-                  maxWidth: "100%",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-                title={`${senderName} <${fromAddr?.address || ""}>`}
-              >
-                {senderName}
-                {fromAddr?.address && (
-                  <span style={{ color: "rgba(0,0,0,0.5)", fontWeight: 400 }}>
-                    {" "}
-                    &lt;{fromAddr.address}&gt;
-                  </span>
-                )}
-              </span>
-              <span style={{ color: "rgba(0,0,0,0.25)", fontSize: 10 }}>•</span>
-              <span style={chip}>
-                <span className="material-icons" style={{ fontSize: 12, opacity: 0.8 }}>
-                  schedule
-                </span>
-                {formatFullDateTime(previewEmail.receivedDateTime)}
-              </span>
-              {previewEmail.isRead === false && (
-                <span
-                  style={{
-                    ...chip,
-                    borderColor: "rgba(26,115,232,0.25)",
-                    background: "rgba(26,115,232,0.08)",
-                    color: "#1a73e8",
-                  }}
-                >
-                  <span className="material-icons" style={{ fontSize: 12 }}>
-                    mark_email_unread
-                  </span>
-                  Unread
-                </span>
-              )}
-              {previewEmail.hasAttachments && (
-                <span style={chip}>
-                  <span className="material-icons" style={{ fontSize: 12, opacity: 0.8 }}>
-                    attach_file
-                  </span>
-                  Attachments
-                </span>
-              )}
-            </div>
-          </div>
-          <button
-            style={{
-              ...actionBtn,
-              background: "rgba(26,115,232,0.10)",
-              borderColor: "rgba(26,115,232,0.25)",
-              color: "#1a73e8",
-            }}
-            onClick={() => onReply?.(previewEmail)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(26,115,232,0.18)";
-              e.currentTarget.style.borderColor = "rgba(26,115,232,0.35)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(26,115,232,0.10)";
-              e.currentTarget.style.borderColor = "rgba(26,115,232,0.25)";
-            }}
-            onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
-            onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
-            title="Reply to this email"
-          >
-            <span className="material-icons" style={{ fontSize: 14 }}>
-              reply
-            </span>
-            Reply
-          </button>
-        </div>
-      </div>
-
       {/* Preview card: clearly bounded "snippet" feel */}
       {threadEmails.length === 0 && (
         <div
@@ -296,6 +157,11 @@ const RightPanel = React.memo(function RightPanel({
               disabled={loadingThread}
               style={{
                 ...actionBtn,
+                padding: "6px 12px",
+                fontSize: 12,
+                fontWeight: 500,
+                gap: 4,
+                borderRadius: 8,
                 opacity: loadingThread ? 0.7 : 1,
                 cursor: loadingThread ? "wait" : "pointer",
                 background: loadingThread ? "rgba(0,0,0,0.04)" : "rgba(26,115,232,0.12)",
@@ -315,7 +181,7 @@ const RightPanel = React.memo(function RightPanel({
               onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
               onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
-              <span className="material-icons" style={{ fontSize: 18 }}>
+              <span className="material-icons-outlined" style={{ fontSize: 14 }}>
                 forum
               </span>
               {loadingThread ? "Loading…" : "Open thread"}
@@ -325,7 +191,7 @@ const RightPanel = React.memo(function RightPanel({
       )}
 
       {threadEmails.length > 0 && (
-        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 10 }}>
+        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
           {threadEmails.map((msg) => (
             <ThreadCard
               key={msg.id}
@@ -337,6 +203,7 @@ const RightPanel = React.memo(function RightPanel({
               mailboxId={mailboxId}
               mailboxEmail={mailboxEmail}
               authToken={authToken}
+              onReply={onReply}
             />
           ))}
         </div>

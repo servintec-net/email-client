@@ -3,7 +3,9 @@ import {
   getInitials,
   getSenderLabel,
   formatFullDateTime,
-  trimQuotedHtml,
+  getQuotedHtmlParts,
+  getQuotedTextParts,
+  trimQuotedText,
   getAvatarGradient,
 } from "../utils/helper";
 import AttachmentTile from "./AttachmentTile";
@@ -17,6 +19,7 @@ const ThreadCard = React.memo(function ThreadCard({
   mailboxEmail,
   mailboxId,
   authToken,
+  onReply,
 }) {
   const senderLabelRaw = getSenderLabel(msg, mailboxEmail);
 
@@ -24,8 +27,9 @@ const ThreadCard = React.memo(function ThreadCard({
   const fromAddress = (fromObj?.address || "").toLowerCase();
   const meAddress = (mailboxEmail || "").toLowerCase();
   const isMe = !!fromAddress && !!meAddress && fromAddress === meAddress;
+  const isDraft = msg.isDraft === true;
 
-  const senderLabel = isMe ? "You" : senderLabelRaw;
+  const senderLabel = isDraft ? "Draft" : (isMe ? `You (${fromObj?.name || fromObj?.address || "Me"})` : senderLabelRaw);
   const avatarInitials = isMe
     ? getInitials(fromObj)
     : (senderLabelRaw || "?")
@@ -39,49 +43,59 @@ const ThreadCard = React.memo(function ThreadCard({
   const gradientBase = isMe ? (fromObj?.name || fromObj?.address || "You") : senderLabelRaw;
   const gradient = getAvatarGradient(gradientBase);
 
-  const { trimmedContent, hasHistory } = useMemo(() => {
-    if (!isExpanded) return { trimmedContent: "", hasHistory: false };
-    if (!isHtml) return { trimmedContent: fullContent, hasHistory: false };
-    const trimmed = trimQuotedHtml(fullContent);
-    return { trimmedContent: trimmed, hasHistory: trimmed !== fullContent };
+  const { mainContent, historyContent, hasHistory } = useMemo(() => {
+    if (!isExpanded) return { mainContent: "", historyContent: "", hasHistory: false };
+    if (isHtml) {
+      const { main, history } = getQuotedHtmlParts(fullContent);
+      return { mainContent: main, historyContent: history, hasHistory: history.length > 0 };
+    }
+    const { main, history } = getQuotedTextParts(fullContent);
+    return { mainContent: main, historyContent: history, hasHistory: history.length > 0 };
   }, [isExpanded, isHtml, fullContent]);
 
+  const headerPreview = useMemo(() => trimQuotedText(msg.bodyPreview || ""), [msg.bodyPreview]);
+
   const surface = {
-    border: "1px solid rgba(0,0,0,0.08)",
-    borderRadius: 14,
-    background: "#fff",
-    boxShadow: isExpanded ? "0 10px 28px rgba(0,0,0,0.08)" : "0 2px 10px rgba(0,0,0,0.04)",
-    transition: "box-shadow 180ms ease, transform 180ms ease, border-color 180ms ease",
-    transform: isExpanded ? "translateY(-1px)" : "translateY(0)",
+    border: isDraft
+      ? "1px solid rgba(245, 158, 11, 0.35)"
+      : "1px solid rgba(0,0,0,0.06)",
+    borderRadius: 16,
+    background: isDraft ? "rgba(255, 251, 235, 0.6)" : "#fff",
+    boxShadow: isExpanded
+      ? (isDraft ? "0 12px 32px rgba(245,158,11,0.08)" : "0 12px 32px rgba(0,0,0,0.06)")
+      : "0 2px 8px rgba(0,0,0,0.04)",
+    transition: "box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease, background 200ms ease",
+    transform: isExpanded ? "translateY(-2px)" : "translateY(0)",
     overflow: "hidden",
   };
 
   const header = {
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
     padding: "12px 14px",
     cursor: "pointer",
     userSelect: "none",
-    backgroundImage: `linear-gradient(rgba(255,255,255,${isExpanded ? 0.72 : 0.82}), rgba(255,255,255,${isExpanded ? 0.72 : 0.82
-      })), ${gradient}`,
-    backgroundColor: "#fff",
+    background: isDraft
+      ? "linear-gradient(135deg, rgba(255,251,235,0.95) 0%, rgba(254,243,199,0.9) 100%)"
+      : `linear-gradient(rgba(255,255,255,${isExpanded ? 0.82 : 0.94}), rgba(255,255,255,${isExpanded ? 0.82 : 0.94})), ${gradient}`,
     backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
-    borderBottom: isExpanded ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(0,0,0,0.04)",
+    borderBottom: isDraft ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(0,0,0,0.06)",
+    transition: "background 0.2s ease",
   };
 
   const chevron = {
-    width: 26,
-    height: 26,
-    borderRadius: 999,
+    width: 28,
+    height: 28,
+    borderRadius: "50%",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: isExpanded ? "rgba(11,95,255,0.12)" : "rgba(0,0,0,0.04)",
-    color: "rgba(0,0,0,0.65)",
+    background: "transparent",
+    color: "rgba(0,0,0,0.45)",
     flexShrink: 0,
-    transition: "transform 200ms ease",
+    transition: "transform 0.2s ease, color 0.2s ease",
     transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
   };
 
@@ -90,61 +104,125 @@ const ThreadCard = React.memo(function ThreadCard({
       <div style={header} onClick={() => onToggleExpand(msg.id)}>
         <div
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: 999,
-            background: gradient,
+            width: 40,
+            height: 40,
+            borderRadius: "50%",
+            background: isDraft ? "linear-gradient(135deg, rgba(245,158,11,0.5), rgba(217,119,6,0.6))" : gradient,
             color: "#fff",
-            fontWeight: 800,
+            fontWeight: 600,
+            fontSize: 13,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            letterSpacing: 0.2,
+            letterSpacing: "0.02em",
+            boxShadow: isDraft ? "0 1px 2px rgba(245,158,11,0.2)" : "0 1px 3px rgba(0,0,0,0.08)",
           }}
         >
-          {avatarInitials || "?"}
+          {isDraft ? (
+            <span className="material-icons-outlined" style={{ fontSize: 18 }}>edit_note</span>
+          ) : (
+            avatarInitials || "?"
+          )}
         </div>
 
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, width: "100%", minWidth: 0 }}>
-            <div
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap", minWidth: 0 }}>
+            <span
               style={{
-                fontSize: 13.5,
-                fontWeight: 700,
+                fontSize: 13,
+                fontWeight: 600,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
+                color: isDraft ? "rgba(120,53,15,0.95)" : "rgba(0,0,0,0.9)",
               }}
             >
               {senderLabel}
-            </div>
-            <div style={{ fontSize: 12, color: "rgba(0,0,0,0.55)", whiteSpace: "nowrap", flexShrink: 0 }}>
-              {formatFullDateTime(msg.receivedDateTime)}
-            </div>
+            </span>
+            <span style={{ fontSize: 11, color: "rgba(0,0,0,0.4)", flexShrink: 0 }}>
+              {msg.receivedDateTime ? formatFullDateTime(msg.receivedDateTime) : "Not sent"}
+            </span>
+            {isDraft && (
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                  color: "rgba(245,158,11,0.9)",
+                  background: "rgba(245,158,11,0.12)",
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  flexShrink: 0,
+                }}
+              >
+                Draft
+              </span>
+            )}
           </div>
-
           <div
             style={{
-              marginTop: 3,
-              fontSize: 13,
-              color: "rgba(0,0,0,0.72)",
+              marginTop: 2,
+              fontSize: 12,
+              color: isDraft ? "rgba(120,53,15,0.65)" : "rgba(0,0,0,0.6)",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              lineHeight: 1.4,
             }}
           >
-            {msg.bodyPreview}
+            {headerPreview || (isDraft ? "No preview" : "")}
           </div>
         </div>
 
-        <div style={chevron} aria-hidden>
-          ▾
+        <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+          {!isMe && onReply && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReply(msg);
+              }}
+              title="Reply"
+              aria-label="Reply"
+              style={{
+                width: 32,
+                height: 32,
+                padding: 0,
+                borderRadius: "50%",
+                border: "none",
+                background: "transparent",
+                color: "rgba(0,0,0,0.45)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.15s ease, color 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.stopPropagation();
+                e.currentTarget.style.background = "rgba(26,115,232,0.1)";
+                e.currentTarget.style.color = "#1a73e8";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.color = "rgba(0,0,0,0.45)";
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onMouseUp={(e) => e.stopPropagation()}
+            >
+              <span className="material-icons-outlined" style={{ fontSize: 18 }}>reply</span>
+            </button>
+          )}
+          <div style={chevron} aria-hidden>
+            <span className="material-icons-outlined" style={{ fontSize: 20 }}>expand_more</span>
+          </div>
         </div>
       </div>
 
       <div style={{ maxHeight: isExpanded ? 2000 : 0, overflow: "hidden" }}>
-        <div style={{ padding: "12px 14px 14px 14px" }} onClick={(e) => e.stopPropagation()}>
+        <div style={{ padding: "16px 18px 18px" }} onClick={(e) => e.stopPropagation()}>
           {Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
               {msg.attachments.map((att) => (
@@ -153,50 +231,126 @@ const ThreadCard = React.memo(function ThreadCard({
             </div>
           )}
 
+          {/* Main content only (no history) */}
           {isHtml ? (
             <div
               style={{ fontSize: 14, lineHeight: 1.55 }}
-              dangerouslySetInnerHTML={{ __html: showHistory ? fullContent : trimmedContent }}
+              dangerouslySetInnerHTML={{ __html: mainContent }}
             />
           ) : (
             <pre style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.55 }}>
-              {showHistory ? fullContent : trimmedContent}
+              {mainContent}
             </pre>
           )}
 
-          {hasHistory && (
-            <button
-              type="button"
-              aria-label="Toggle quoted text"
-              aria-pressed={showHistory}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleHistory(msg.id);
-              }}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: 16,
-                minWidth: 34,
-                padding: "0px 6px 6px 6px",
-                borderRadius: 10,
-                background: "rgba(250,249,248,1)",
-                border: "1px solid rgba(225,223,221,1)",
-                color: "rgba(54, 54, 54, 1)",
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: 1,
-                cursor: "pointer",
-                userSelect: "none",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(243,242,241,1)")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(250,249,248,1)")}
-              onMouseDown={(e) => (e.currentTarget.style.background = "rgba(237,235,233,1)")}
-              onMouseUp={(e) => (e.currentTarget.style.background = "rgba(243,242,241,1)")}
-            >
-              …
-            </button>
+          {/* Button row: "…" (toggle history) and Reply — stays right after main content */}
+          {((!isMe && onReply) || hasHistory) && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 14, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {hasHistory && (
+                  <button
+                    type="button"
+                    aria-label="Toggle quoted text"
+                    aria-pressed={showHistory}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleHistory(msg.id);
+                    }}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      height: 16,
+                      minWidth: 22,
+                      padding: 0,
+                      borderRadius: 4,
+                      background: "rgba(0,0,0,0.05)",
+                      border: "1px solid rgba(0,0,0,0.08)",
+                      color: "rgba(0,0,0,0.65)",
+                      fontSize: 10,
+                      fontWeight: 600,
+                      lineHeight: 1,
+                      letterSpacing: 0.2,
+                      cursor: "pointer",
+                      userSelect: "none",
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.08)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(0,0,0,0.05)")}
+                  >
+                    …
+                  </button>
+                )}
+              </div>
+              {!isMe && onReply && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReply(msg);
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 4,
+                    padding: "6px 12px",
+                    borderRadius: 8,
+                    border: "1px solid rgba(26,115,232,0.25)",
+                    background: "rgba(26,115,232,0.12)",
+                    color: "#1a73e8",
+                    fontSize: 12,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    transition: "background 0.15s ease, border-color 0.15s ease, transform 0.1s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(26,115,232,0.18)";
+                    e.currentTarget.style.borderColor = "rgba(26,115,232,0.35)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(26,115,232,0.12)";
+                    e.currentTarget.style.borderColor = "rgba(26,115,232,0.25)";
+                  }}
+                  onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
+                  onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                >
+                  <span className="material-icons-outlined" style={{ fontSize: 14 }}>reply</span>
+                  Reply
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* History portion — only after the button, when expanded */}
+          {hasHistory && showHistory && historyContent && (
+            <>
+              {isHtml ? (
+                <div
+                  style={{
+                    marginTop: 14,
+                    paddingTop: 14,
+                    borderTop: "1px solid rgba(0,0,0,0.08)",
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    color: "rgba(0,0,0,0.7)",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: historyContent }}
+                />
+              ) : (
+                <pre
+                  style={{
+                    marginTop: 14,
+                    paddingTop: 14,
+                    borderTop: "1px solid rgba(0,0,0,0.08)",
+                    whiteSpace: "pre-wrap",
+                    fontSize: 14,
+                    lineHeight: 1.55,
+                    color: "rgba(0,0,0,0.7)",
+                  }}
+                >
+                  {historyContent}
+                </pre>
+              )}
+            </>
           )}
         </div>
       </div>

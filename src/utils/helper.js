@@ -63,7 +63,7 @@ export const getSenderLabel = (msg, userEmail) => {
     if (!sender) return "Sender";
 
     if (sender.address?.toLowerCase() === userEmail?.toLowerCase()) {
-        return "You";
+        return `You (${sender.name || sender.address || "Me"})`;
     }
 
     return sender.name || sender.address || "Sender";
@@ -101,29 +101,22 @@ export const formatFullDateTime = (isoDate) => {
     }
 };
 
-export const trimQuotedHtml = (html) => {
-    if (!html) return "";
-
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const body = doc.body;
-
-    // Collect candidate "quote/history" start nodes
+/** Find the earliest "quote/history" start node in parsed body, or null if none. */
+function findQuoteStartNode(body) {
     const candidates = [];
 
     const pushAll = (selector) => {
         body.querySelectorAll(selector).forEach((el) => candidates.push(el));
     };
 
-    // Common containers
-    pushAll("blockquote");                       // Gmail / generic / Apple Mail cites
+    pushAll("blockquote");
     pushAll("blockquote[type='cite']");
     pushAll("div.gmail_quote, div[class*='gmail_quote']");
     pushAll("div.gmail_extra");
-    pushAll("div[style*='border-left']");        // Outlook inline quote style
-    pushAll("#divRplyFwdMsg, div[id*='divRplyFwdMsg']"); // Outlook reply/forward wrapper (often present)
-    pushAll(".OutlookMessageHeader");            // Some Outlook variants
+    pushAll("div[style*='border-left']");
+    pushAll("#divRplyFwdMsg, div[id*='divRplyFwdMsg']");
+    pushAll(".OutlookMessageHeader");
 
-    // HR is noisy; only treat it as a cut if the text right after looks like a header
     body.querySelectorAll("hr").forEach((hr) => {
         const nextText =
             (hr.nextSibling?.textContent || "") +
@@ -134,46 +127,111 @@ export const trimQuotedHtml = (html) => {
         }
     });
 
-    // Text-based reply separators (covers many Outlook/plain-text replies embedded in HTML)
     const headerRegex =
         /(-----\s*Original Message\s*-----|-----\s*Forwarded message\s*-----|^\s*From:\s|^\s*Sent:\s|^\s*To:\s|^\s*Subject:\s|On .+wrote:)/im;
 
-    // Scan typical block elements for header patterns
     body.querySelectorAll("div,p,td,section").forEach((el) => {
         const text = (el.textContent || "").replace(/\u00a0/g, " ").trim();
         if (!text) return;
         if (headerRegex.test(text)) candidates.push(el);
     });
 
-    // No history detected → return full
-    if (!candidates.length) return body.innerHTML.trim();
+    if (!candidates.length) return null;
 
-    // Pick the earliest node in document order
     let cutNode = candidates[0];
     for (const n of candidates.slice(1)) {
         if (cutNode === n) continue;
-        // If n is before cutNode, replace
         if (cutNode.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_PRECEDING) {
             cutNode = n;
         }
     }
+    return cutNode;
+}
 
-    // Use Range so nested cutNode still works (keeps everything before cutNode)
+/** Returns { main, history }: main = content before quote, history = quoted part (or empty). */
+export function getQuotedHtmlParts(html) {
+    if (!html) return { main: "", history: "" };
+
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const body = doc.body;
+    const cutNode = findQuoteStartNode(body);
+
+    if (!cutNode) {
+        const full = body.innerHTML.trim();
+        return { main: full, history: "" };
+    }
+
     const range = doc.createRange();
     range.setStart(body, 0);
     range.setEndBefore(cutNode);
-
-    const frag = range.cloneContents();
-    const wrapper = doc.createElement("div");
-    wrapper.appendChild(frag);
-
-    // Optional: trim trailing empty space / <br> spam
-    const out = wrapper.innerHTML
+    const mainFrag = range.cloneContents();
+    const mainWrapper = doc.createElement("div");
+    mainWrapper.appendChild(mainFrag);
+    const main = mainWrapper.innerHTML
         .replace(/(?:\s|&nbsp;|<br\s*\/?>|<div>\s*<\/div>)+$/gi, "")
         .trim();
 
-    return out;
+    range.setStartBefore(cutNode);
+    range.setEndAfter(body);
+    const historyFrag = range.cloneContents();
+    const historyWrapper = doc.createElement("div");
+    historyWrapper.appendChild(historyFrag);
+    const history = historyWrapper.innerHTML.trim();
+
+    return { main, history };
+}
+
+export const trimQuotedHtml = (html) => {
+    const { main } = getQuotedHtmlParts(html || "");
+    return main;
 };
+
+/** Trim plain-text preview to main content only (no quoted/history portion). */
+export function trimQuotedText(text) {
+    const { main } = getQuotedTextParts(text || "");
+    return main;
+}
+
+// Match quote/history start with or without leading newline (bodyPreview is often one line)
+// Order doesn't matter — we take the earliest match. Include separators (underscores, long dashes) first.
+const QUOTED_TEXT_PATTERNS = [
+    // Separator lines: underscores or long dashes (common in forwarded/reply headers)
+    /\s*_{3,}/,   // optional space + 3+ underscores (catches "text___" or "text ___")
+    /\s+_{3,}/,   // space + 3+ underscores
+    /\s*-{5,}\s*/,
+    /\s+-{5,}\s*/,
+    // Standard reply/forward headers
+    /\s+-----\s*Original Message\s*-----/i,
+    /\s+-----\s*Forwarded message\s*-----/i,
+    /\s+On\s+.+wrote:\s*$/im,
+    /\s+On\s+\d{1,2}\/\d{1,2}\/\d{2,4}.+wrote:/im,
+    /\s+From:\s+/im,
+    /\s+Sent:\s+/im,
+    /\s+To:\s+/im,
+    /\s+Subject:\s+/im,
+    /\s+<?[^\s@]+@[^\s>]+>\s*wrote:\s*$/im,
+];
+
+/** Returns { main, history } for plain text (main = before quote, history = rest). */
+export function getQuotedTextParts(text) {
+    if (!text || typeof text !== "string") return { main: "", history: "" };
+    const t = text.trim();
+    let earliest = t.length;
+    for (const re of QUOTED_TEXT_PATTERNS) {
+        const match = t.match(re);
+        if (match && match.index !== undefined && match.index < earliest) {
+            earliest = match.index;
+        }
+    }
+    if (earliest < t.length) {
+        let main = t.slice(0, earliest).trim();
+        const history = t.slice(earliest).trim();
+        // Strip any trailing separator line (underscores, long dashes) that leaked into main
+        main = main.replace(/\s*[-_]{3,}\s*$/, "").trim();
+        return { main, history };
+    }
+    return { main: t, history: "" };
+}
 
 export const formatBytes = (bytes = 0) => {
     const b = Number(bytes) || 0;

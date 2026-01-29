@@ -85,43 +85,48 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
 
   const getInputStyle = (id) => ({
     width: "100%",
-    padding: "12px 14px",
+    maxWidth: "100%",
+    boxSizing: "border-box",
+    minWidth: 0,
+    padding: "10px 12px",
     fontSize: 14,
-    lineHeight: 1.4,
+    lineHeight: 1.45,
     border: focusedId === id
-      ? "1px solid #1a73e8"
-      : "1px solid rgba(0,0,0,0.14)",
-    borderRadius: 12,
+      ? "1px solid #0b5fff"
+      : "1px solid rgba(0,0,0,0.12)",
+    borderRadius: 10,
     background: focusedId === id ? "#fff" : "rgba(0,0,0,0.02)",
     color: "rgba(0,0,0,0.9)",
     outline: "none",
-    transition: "border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease",
-    boxShadow: focusedId === id ? "0 0 0 3px rgba(26,115,232,0.15)" : "none",
+    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+    boxShadow: focusedId === id ? "0 0 0 2px rgba(11,95,255,0.2)" : "none",
   });
 
   return (
     <div
       style={{
-        maxWidth: 600,
+        width: "100%",
+        maxWidth: 560,
         margin: "0 auto",
         padding: 0,
         background: "#fff",
         borderRadius: 16,
-        border: "1px solid rgba(0,0,0,0.08)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+        border: "1px solid rgba(0,0,0,0.06)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.04)",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
+        boxSizing: "border-box",
       }}
     >
       {/* Header */}
       <div
         style={{
-          padding: "18px 20px",
+          padding: "16px 20px",
           borderBottom: "1px solid rgba(0,0,0,0.06)",
-          background: "linear-gradient(180deg, rgba(26,115,232,0.04) 0%, rgba(0,0,0,0.02) 100%)",
+          background: "rgba(11,95,255,0.04)",
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-start",
           justifyContent: "space-between",
           gap: 12,
         }}
@@ -130,7 +135,7 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
           <h2
             style={{
               margin: 0,
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: 700,
               color: "rgba(0,0,0,0.9)",
               display: "flex",
@@ -138,19 +143,16 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
               gap: 8,
             }}
           >
-            <span
-              className="material-icons"
-              style={{ fontSize: 20, color: "#1a73e8" }}
-            >
+            <span className="material-icons-outlined" style={{ fontSize: 20, color: "#0b5fff" }}>
               reply
             </span>
             Reply
           </h2>
           <p
             style={{
-              margin: "4px 0 0 0",
+              margin: "6px 0 0 0",
               fontSize: 13,
-              color: "rgba(0,0,0,0.55)",
+              color: "rgba(0,0,0,0.6)",
               fontWeight: 500,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -164,7 +166,7 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
               style={{
                 margin: "2px 0 0 0",
                 fontSize: 12,
-                color: "rgba(0,0,0,0.45)",
+                color: "rgba(0,0,0,0.5)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -193,21 +195,30 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = "rgba(0,0,0,0.06)";
-            e.currentTarget.style.color = "rgba(0,0,0,0.8)";
+            e.currentTarget.style.color = "rgba(0,0,0,0.85)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = "transparent";
             e.currentTarget.style.color = "rgba(0,0,0,0.5)";
           }}
         >
-          <span className="material-icons" style={{ fontSize: 22 }}>close</span>
+          <span className="material-icons-outlined" style={{ fontSize: 20 }}>close</span>
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-        {/* Fields */}
-        <div style={{ padding: "20px 20px 16px", flex: 1, minHeight: 0 }}>
-          <div style={{ marginBottom: 18 }}>
+      <form
+        onSubmit={handleSubmit}
+        onKeyDown={(e) => {
+          if (e.ctrlKey && e.key === "Enter") {
+            e.preventDefault();
+            handleSubmit(e);
+          }
+        }}
+        style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0, minWidth: 0 }}
+      >
+        {/* Fields — constrain width so TO/SUBJECT/MESSAGE don't break layout */}
+        <div style={{ padding: "20px 20px 16px", flex: 1, minHeight: 0, minWidth: 0, boxSizing: "border-box" }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={fieldLabel} htmlFor="reply-to">To</label>
             <input
               id="reply-to"
@@ -221,7 +232,7 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
               required
             />
           </div>
-          <div style={{ marginBottom: 18 }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={fieldLabel} htmlFor="reply-subject">Subject</label>
             <input
               id="reply-subject"
@@ -247,10 +258,10 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
               rows={10}
               style={{
                 ...getInputStyle("reply-body"),
-                minHeight: 220,
+                minHeight: 200,
                 resize: "vertical",
                 fontFamily: "inherit",
-                padding: "14px 14px",
+                padding: "12px 14px",
               }}
             />
           </div>
@@ -290,7 +301,7 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
         {/* Actions */}
         <div
           style={{
-            padding: "16px 20px 20px",
+            padding: "14px 20px 18px",
             borderTop: "1px solid rgba(0,0,0,0.06)",
             background: "rgba(0,0,0,0.02)",
             display: "flex",
@@ -303,10 +314,10 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
             type="button"
             onClick={onClose}
             style={{
-              padding: "10px 18px",
-              fontSize: 14,
+              padding: "8px 16px",
+              fontSize: 13,
               fontWeight: 600,
-              border: "1px solid rgba(0,0,0,0.12)",
+              border: "1px solid rgba(0,0,0,0.1)",
               borderRadius: 10,
               background: "#fff",
               color: "rgba(0,0,0,0.75)",
@@ -318,7 +329,7 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = "#fff";
-              e.currentTarget.style.borderColor = "rgba(0,0,0,0.12)";
+              e.currentTarget.style.borderColor = "rgba(0,0,0,0.1)";
             }}
           >
             Cancel
@@ -327,43 +338,40 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
             type="submit"
             disabled={sending}
             style={{
-              padding: "10px 22px",
-              fontSize: 14,
+              padding: "8px 18px",
+              fontSize: 13,
               fontWeight: 600,
               border: "none",
               borderRadius: 10,
-              background: sending ? "rgba(26,115,232,0.6)" : "#1a73e8",
+              background: sending ? "rgba(11,95,255,0.5)" : "#0b5fff",
               color: "#fff",
               cursor: sending ? "wait" : "pointer",
               display: "inline-flex",
               alignItems: "center",
-              gap: 8,
-              boxShadow: sending ? "none" : "0 2px 8px rgba(26,115,232,0.35)",
+              gap: 6,
+              boxShadow: sending ? "none" : "0 2px 8px rgba(11,95,255,0.3)",
             }}
             onMouseEnter={(e) => {
               if (!sending) {
-                e.currentTarget.style.background = "#1557b0";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(26,115,232,0.4)";
+                e.currentTarget.style.background = "#0949c4";
+                e.currentTarget.style.boxShadow = "0 4px 12px rgba(11,95,255,0.35)";
               }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = sending ? "rgba(26,115,232,0.6)" : "#1a73e8";
-              e.currentTarget.style.boxShadow = sending ? "none" : "0 2px 8px rgba(26,115,232,0.35)";
+              e.currentTarget.style.background = sending ? "rgba(11,95,255,0.5)" : "#0b5fff";
+              e.currentTarget.style.boxShadow = sending ? "none" : "0 2px 8px rgba(11,95,255,0.3)";
             }}
           >
             {sending ? (
               <>
-                <span
-                  className="material-icons"
-                  style={{ fontSize: 18, animation: "spin 1s linear infinite" }}
-                >
+                <span className="material-icons-outlined" style={{ fontSize: 16, animation: "spin 1s linear infinite" }}>
                   hourglass_empty
                 </span>
                 Sending…
               </>
             ) : (
               <>
-                <span className="material-icons" style={{ fontSize: 18 }}>send</span>
+                <span className="material-icons-outlined" style={{ fontSize: 16 }}>send</span>
                 Send
               </>
             )}
