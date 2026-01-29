@@ -89,17 +89,18 @@ const TopBar = React.memo(function TopBar({
       <style>{dropdownHoverStyles}</style>
       <header
         style={{
-          padding: "8px 14px",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          padding: "10px 16px",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          background: "#fafafa",
+          background: "#fff",
           gap: 12,
           minHeight: 44,
+          boxSizing: "border-box",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, minWidth: 0 }}>
           <img
             src="/servintec-logo.png"
             alt="Servintec"
@@ -113,25 +114,23 @@ const TopBar = React.memo(function TopBar({
               e.target.style.display = "none";
             }}
           />
-          <div style={{ minWidth: 0, flex: 1 }}>
-            {topBarTitle && (
-              <span
-                style={{
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "rgba(0,0,0,0.75)",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  display: "block",
-                }}
-                title={topBarTitle}
-              >
-                {topBarTitle}
-              </span>
-            )}
-          </div>
-
+          {/* Show mailbox name only when no selector (single mailbox); selector shows current mailbox when multiple */}
+          {mailboxes.length <= 1 && topBarTitle && (
+            <span
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "rgba(0,0,0,0.75)",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minWidth: 0,
+              }}
+              title={topBarTitle}
+            >
+              {topBarTitle}
+            </span>
+          )}
           {mailboxes.length > 1 && (
             <MailboxSelector
               mailboxes={mailboxes}

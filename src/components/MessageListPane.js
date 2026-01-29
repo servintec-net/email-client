@@ -3,7 +3,8 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import EmailRow from "./EmailRow";
 import { ICON_BY_NAME } from "../utils/constants";
 
-const LOADING_FRAMES = ["loading.", "loading..", "loading...", "loading"];
+// Dots only (keeps "Loading" fixed so left position doesn't shift)
+const LOADING_FRAMES = ["Loading.", "Loading..", "Loading..."];
 
 const MessageListPane = React.memo(function MessageListPane({
   selectedFolderPath,
@@ -172,7 +173,9 @@ const MessageListPane = React.memo(function MessageListPane({
               fontSize: 14,
             }}
           >
-            <span>{LOADING_FRAMES[loadingFrame]}</span>
+            <span style={{ minWidth: "10ch", display: "inline-block", textAlign: "left" }}>
+              {LOADING_FRAMES[loadingFrame]}
+            </span>
           </div>
         )}
         {!loadingList && emails.length === 0 && (
