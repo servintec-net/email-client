@@ -11,6 +11,7 @@ import TopBar from "./components/TopBar";
 import FolderPane from "./components/FolderPane";
 import MessageListPane from "./components/MessageListPane";
 import RightPanel from "./components/RightPanel";
+import ReplyPanel from "./components/ReplyPanel";
 import ChangePassword from "./components/ChangePassword";
 
 function App() {
@@ -48,7 +49,12 @@ function App() {
   const [loadingThread, setLoadingThread] = useState(false);
   const [expandedById, setExpandedById] = useState({});
   const [showHistoryById, setShowHistoryById] = useState({});
+  const [replyToEmail, setReplyToEmail] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
+
+  useEffect(() => {
+    if (!previewEmail) setReplyToEmail(null);
+  }, [previewEmail]);
 
   const allFolderPaths = useMemo(() => flattenFolderTree(FOLDER_TREE), []);
   const [selectedFolderPath, setSelectedFolderPath] = useState(allFolderPaths?.[0] || "Inbox");
@@ -1357,41 +1363,123 @@ function App() {
         <div
           style={{
             flex: 1,
-            overflowY: "scroll",
-            overflowX: "hidden",
-            scrollbarGutter: "stable",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
             background: "linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.01))",
           }}
         >
-          {!previewEmail && (
+          {/* Right pane toolbar — matches MessageListPane header height/style for aligned content */}
+          <div
+            style={{
+              flexShrink: 0,
+              height: 40,
+              padding: "0 10px",
+              borderBottom: "1px solid rgba(0,0,0,0.08)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              minWidth: 0,
+              background: "#fff",
+              boxSizing: "border-box",
+            }}
+          >
+            <span
+              className="material-icons-outlined"
+              style={{ fontSize: 18, color: "rgba(0,0,0,0.80)", flexShrink: 0 }}
+              aria-hidden
+            >
+              {replyToEmail
+                ? "reply"
+                : previewEmail
+                  ? "mail"
+                  : "mail_outline"}
+            </span>
             <div
               style={{
-                height: "100%",
-                display: "grid",
-                placeItems: "center",
-                color: "rgba(0,0,0,0.55)",
-                fontSize: 14,
+                fontSize: 12.5,
+                fontWeight: 700,
+                color: "rgba(0,0,0,0.78)",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minWidth: 0,
               }}
+              title={replyToEmail ? "Reply" : previewEmail ? (previewEmail.subject || "No subject") : "Preview"}
             >
-              Select an email…
+              {replyToEmail
+                ? "Reply"
+                : previewEmail
+                  ? (previewEmail.subject || "No subject")
+                  : "Preview"}
             </div>
-          )}
+          </div>
 
-          {previewEmail && (
-            <RightPanel
-              previewEmail={previewEmail}
-              threadEmails={threadEmails}
-              expandedById={expandedById}
-              showHistoryById={showHistoryById}
-              toggleExpanded={toggleExpanded}
-              toggleHistory={toggleHistory}
-              loadThread={loadThread}
-              loadingThread={loadingThread}
-              mailboxId={selectedMailboxId}
-              mailboxEmail={selectedMailbox?.mailbox_email}
-              authToken={authToken}
-            />
-          )}
+          {/* Content area — flex layout, no scroll here so empty state never shows scrollbar */}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              padding: 8,
+              background: "rgba(0,0,0,0.02)",
+            }}
+          >
+            {!previewEmail && (
+              <div
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  color: "rgba(0,0,0,0.45)",
+                  fontSize: 14,
+                  transform: "translateY(-50px)",
+                }}
+              >
+                <span className="material-icons-outlined" style={{ fontSize: 48, opacity: 0.5 }}>
+                  visibility
+                </span>
+                <span style={{ fontWeight: 500 }}>Select an email to preview</span>
+                <span style={{ fontSize: 12, fontWeight: 400 }}>Preview appears here</span>
+              </div>
+            )}
+
+            {replyToEmail && (
+              <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                <ReplyPanel
+                  replyToEmail={replyToEmail}
+                  mailboxId={selectedMailboxId}
+                  onClose={() => setReplyToEmail(null)}
+                  onSent={() => setReplyToEmail(null)}
+                />
+              </div>
+            )}
+
+            {previewEmail && !replyToEmail && (
+              <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
+                <RightPanel
+                  previewEmail={previewEmail}
+                  threadEmails={threadEmails}
+                  expandedById={expandedById}
+                  showHistoryById={showHistoryById}
+                  toggleExpanded={toggleExpanded}
+                  toggleHistory={toggleHistory}
+                  loadThread={loadThread}
+                  loadingThread={loadingThread}
+                  onReply={setReplyToEmail}
+                  mailboxId={selectedMailboxId}
+                  mailboxEmail={selectedMailbox?.mailbox_email}
+                  authToken={authToken}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

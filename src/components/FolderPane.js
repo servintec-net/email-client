@@ -4,7 +4,7 @@ import LabelsPane from "./LabelsPane";
 
 const tabStyle = (active) => ({
   flex: 1,
-  padding: "10px 12px",
+  padding: "8px 12px",
   border: "none",
   borderBottom: active ? "2px solid #0b5fff" : "2px solid transparent",
   background: "transparent",
@@ -16,6 +16,7 @@ const tabStyle = (active) => ({
   alignItems: "center",
   justifyContent: "center",
   gap: 6,
+  boxSizing: "border-box",
 });
 
 const FolderPane = React.memo(function FolderPane({
@@ -47,8 +48,12 @@ const FolderPane = React.memo(function FolderPane({
       <div
         style={{
           display: "flex",
+          height: 40,
+          flexShrink: 0,
+          alignItems: "stretch",
           borderBottom: "1px solid rgba(0,0,0,0.08)",
           background: "#fff",
+          boxSizing: "border-box",
         }}
       >
         <button

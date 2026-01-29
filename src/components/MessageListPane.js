@@ -1,7 +1,9 @@
 // MessageListPane.jsx
-import React, { useMemo, useRef, useEffect, useCallback } from "react";
+import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import EmailRow from "./EmailRow";
 import { ICON_BY_NAME } from "../utils/constants";
+
+const LOADING_FRAMES = ["loading.", "loading..", "loading...", "loading"];
 
 const MessageListPane = React.memo(function MessageListPane({
   selectedFolderPath,
@@ -36,6 +38,17 @@ const MessageListPane = React.memo(function MessageListPane({
   // Infinite scroll implementation
   const scrollContainerRef = useRef(null);
   const isLoadingRef = useRef(false);
+
+  // Cycling "loading." / "loading.." / "loading..." / "loading" when loading list
+  const [loadingFrame, setLoadingFrame] = useState(0);
+  const showLoadingDots = loadingList && emails.length === 0;
+  useEffect(() => {
+    if (!showLoadingDots) return;
+    const id = setInterval(() => {
+      setLoadingFrame((prev) => (prev + 1) % LOADING_FRAMES.length);
+    }, 400);
+    return () => clearInterval(id);
+  }, [showLoadingDots]);
 
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
@@ -85,13 +98,16 @@ const MessageListPane = React.memo(function MessageListPane({
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
       <div
         style={{
-          padding: "10px 10px",
+          flexShrink: 0,
+          height: 40,
+          padding: "0 10px",
           borderBottom: "1px solid rgba(0,0,0,0.08)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: 10,
           background: "#fff",
+          boxSizing: "border-box",
         }}
       >
         <div style={{ minWidth: 0 }}>
@@ -134,37 +150,63 @@ const MessageListPane = React.memo(function MessageListPane({
       </div>
 
       <div
-        ref={scrollContainerRef}
-        style={{ flex: 1, overflow: "auto", padding: 8, background: "rgba(0,0,0,0.02)" }}
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          padding: 8,
+          background: "rgba(0,0,0,0.02)",
+        }}
       >
         {loadingList && emails.length === 0 && (
           <div
             style={{
-              height: "100%",
-              display: "grid",
-              placeItems: "center",
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               color: "rgba(0,0,0,0.55)",
               fontSize: 14,
             }}
           >
-            <span>Loading…</span>
+            <span>{LOADING_FRAMES[loadingFrame]}</span>
           </div>
         )}
         {!loadingList && emails.length === 0 && (
           <div
             style={{
-              height: "100%",
-              display: "grid",
-              placeItems: "center",
-              color: "rgba(0,0,0,0.5)",
+              flex: 1,
+              minHeight: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 10,
+              color: "rgba(0,0,0,0.45)",
               fontSize: 14,
+              transform: "translateY(-50px)",
             }}
           >
-            No emails in this folder
+            <span
+              className="material-icons-outlined"
+              style={{ fontSize: 48, opacity: 0.5 }}
+            >
+              mail_outline
+            </span>
+            <span style={{ fontWeight: 500 }}>No emails in this folder</span>
+            <span style={{ fontSize: 12, fontWeight: 400 }}>
+              {folderLabel ? `"${folderLabel}" is empty` : "This folder is empty"}
+            </span>
           </div>
         )}
         {emails.length > 0 && (
-          <>
+          <div
+            ref={scrollContainerRef}
+            style={{ flex: 1, minHeight: 0, overflow: "auto" }}
+          >
             {emails.map((msg) => (
               <div key={msg.id} onMouseEnter={() => setHoveredId(msg.id)} onMouseLeave={() => setHoveredId(null)}>
                 <EmailRow
@@ -178,33 +220,33 @@ const MessageListPane = React.memo(function MessageListPane({
                 />
               </div>
             ))}
-          </>
-        )}
-        {!loadingList && loadingMore && (
-          <div
-            style={{
-              padding: "16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              color: "rgba(0,0,0,0.55)",
-              fontSize: 12.5,
-            }}
-          >
-            Loading more emails…
-          </div>
-        )}
-        {!hasMoreEmails && emails.length > 0 && (
-          <div
-            style={{
-              padding: "16px",
-              textAlign: "center",
-              color: "rgba(0,0,0,0.45)",
-              fontSize: 12,
-            }}
-          >
-            No more emails
+            {!loadingList && loadingMore && (
+              <div
+                style={{
+                  padding: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  color: "rgba(0,0,0,0.55)",
+                  fontSize: 12.5,
+                }}
+              >
+                Loading more emails…
+              </div>
+            )}
+            {!hasMoreEmails && emails.length > 0 && (
+              <div
+                style={{
+                  padding: "16px",
+                  textAlign: "center",
+                  color: "rgba(0,0,0,0.45)",
+                  fontSize: 12,
+                }}
+              >
+                No more emails
+              </div>
+            )}
           </div>
         )}
       </div>
