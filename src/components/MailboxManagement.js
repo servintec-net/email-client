@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { API_BASE } from "../utils/constants";
 import { getAuthHeadersWithToken } from "../utils/auth";
 import { getMailboxDisplayLabel } from "../utils/helper";
@@ -17,12 +17,21 @@ const MailboxManagement = ({
 }) => {
   const [disconnecting, setDisconnecting] = useState(null);
   const [error, setError] = useState("");
+  const [confirmDisconnectMailbox, setConfirmDisconnectMailbox] = useState(null);
+
+  useEffect(() => {
+    if (!confirmDisconnectMailbox) return;
+    const onKeyDown = (e) => e.key === "Escape" && setConfirmDisconnectMailbox(null);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [confirmDisconnectMailbox]);
+
+  const handleDisconnectClick = (mailbox) => {
+    setConfirmDisconnectMailbox(mailbox);
+  };
 
   const handleDisconnect = async (mailboxId) => {
-    if (!window.confirm("Are you sure you want to disconnect this mailbox? This action cannot be undone.")) {
-      return;
-    }
-
+    setConfirmDisconnectMailbox(null);
     setDisconnecting(mailboxId);
     setError("");
 
@@ -73,6 +82,94 @@ const MailboxManagement = ({
           }
         `}
       </style>
+
+      {/* Disconnect confirmation modal */}
+      {confirmDisconnectMailbox && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 24,
+          }}
+          onClick={() => setConfirmDisconnectMailbox(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="disconnect-modal-title"
+        >
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 12px 40px rgba(0,0,0,0.2)",
+              maxWidth: 400,
+              width: "100%",
+              padding: 24,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+              <span
+                className="material-icons-outlined"
+                style={{ fontSize: 28, color: "#dc3545", flexShrink: 0 }}
+              >
+                link_off
+              </span>
+              <div>
+                <h2 id="disconnect-modal-title" style={{ margin: "0 0 8px 0", fontSize: 18, fontWeight: 700, color: "rgba(0,0,0,0.9)" }}>
+                  Disconnect mailbox?
+                </h2>
+                <p style={{ margin: 0, fontSize: 14, color: "rgba(0,0,0,0.65)", lineHeight: 1.5 }}>
+                  Are you sure you want to disconnect <strong>{getMailboxDisplayLabel(confirmDisconnectMailbox, mailboxDisplayNamesCache)}</strong>? This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setConfirmDisconnectMailbox(null)}
+                style={{
+                  padding: "10px 18px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: 10,
+                  background: "#fff",
+                  color: "rgba(0,0,0,0.8)",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDisconnect(confirmDisconnectMailbox.id)}
+                style={{
+                  padding: "10px 18px",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  border: "none",
+                  borderRadius: 10,
+                  background: "#dc3545",
+                  color: "#fff",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <span className="material-icons-outlined" style={{ fontSize: 18 }}>link_off</span>
+                Disconnect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div
         style={{
           height: "100vh",
@@ -238,7 +335,7 @@ const MailboxManagement = ({
                     </div>
                   </div>
                   <button
-                    onClick={() => handleDisconnect(mailbox.id)}
+                    onClick={() => handleDisconnectClick(mailbox)}
                     disabled={disconnecting === mailbox.id}
                     style={{
                       padding: "8px 16px",

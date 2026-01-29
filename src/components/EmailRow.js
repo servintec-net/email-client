@@ -192,13 +192,18 @@ const EmailRow = React.memo(function EmailRow({
               {jobBoardDisplay && (
                 <span
                   style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "#c62828",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "#b71c1c",
+                    background: "rgba(183, 28, 28, 0.12)",
+                    border: "1px solid rgba(183, 28, 28, 0.25)",
+                    padding: "3px 8px",
+                    borderRadius: 6,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     maxWidth: 140,
+                    letterSpacing: "0.02em",
                   }}
                 >
                   {jobBoardDisplay}
@@ -207,13 +212,18 @@ const EmailRow = React.memo(function EmailRow({
               {roleDisplay && (
                 <span
                   style={{
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: "#1565c0",
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "#0d47a1",
+                    background: "rgba(13, 71, 161, 0.12)",
+                    border: "1px solid rgba(13, 71, 161, 0.25)",
+                    padding: "3px 8px",
+                    borderRadius: 6,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     maxWidth: 140,
+                    letterSpacing: "0.02em",
                   }}
                 >
                   {roleDisplay}

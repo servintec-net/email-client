@@ -38,8 +38,8 @@ const FolderPane = React.memo(function FolderPane({
   return (
     <div
       style={{
-        width: 260,
-        borderRight: "1px solid rgba(0,0,0,0.10)",
+        width: "100%",
+        minWidth: 0,
         display: "flex",
         flexDirection: "column",
         background: "rgba(0,0,0,0.015)",

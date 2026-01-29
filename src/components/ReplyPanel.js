@@ -33,21 +33,28 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    const toTrim = to.trim();
-    if (!toTrim) {
-      setError("Recipient (To) is required.");
-      return;
-    }
+    const bodyTrim = body.trim();
+    const messageId = replyToEmail?.id;
+    // In-thread reply: use message reply API (keeps same conversation). Otherwise fallback to send-mail.
+    const useReplyApi = messageId && replyToEmail?.conversationId;
     setSending(true);
     try {
-      const res = await fetch(
-        `${API_BASE}/me/send-mail?mailboxId=${mailboxId}`,
-        {
-          method: "POST",
-          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify({ to: toTrim, subject: subject.trim(), body: body.trim() }),
-        }
-      );
+      const url = useReplyApi
+        ? `${API_BASE}/me/messages/${encodeURIComponent(messageId)}/reply?mailboxId=${mailboxId}`
+        : `${API_BASE}/me/send-mail?mailboxId=${mailboxId}`;
+      const payload = useReplyApi
+        ? { comment: bodyTrim || " " }
+        : { to: (to || "").trim(), subject: subject.trim(), body: bodyTrim };
+      if (!useReplyApi && !payload.to) {
+        setError("Recipient (To) is required.");
+        setSending(false);
+        return;
+      }
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const message =

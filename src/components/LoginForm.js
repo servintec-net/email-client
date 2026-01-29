@@ -64,65 +64,143 @@ const LoginForm = ({ onLogin }) => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-        backgroundSize: "200% 200%",
-        animation: "gradientShift 8s ease infinite",
+        background: "linear-gradient(to bottom right, #111827, #581c87, #000)",
+        minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
       }}
     >
-      {/* Modern grid pattern overlay */}
+      {/* Moving gradient layer - drifts across screen */}
       <div
+        className="auth-page-bg-drift"
         style={{
           position: "absolute",
-          width: "100%",
-          height: "100%",
-          backgroundImage: `
-            linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px)
-          `,
-          backgroundSize: "50px 50px",
-          opacity: 0.4,
+          inset: "-50%",
+          width: "200%",
+          height: "200%",
+          pointerEvents: "none",
         }}
       />
-      
-      {/* Animated gradient orbs */}
+      {/* Animated radial glow - cycles position */}
       <div
+        className="auth-page-bg-glow"
         style={{
           position: "absolute",
-          width: "600px",
-          height: "600px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, transparent 70%)",
-          top: "-300px",
-          right: "-300px",
-          animation: "floatOrb 20s ease-in-out infinite",
+          inset: 0,
+          opacity: 0.25,
+          pointerEvents: "none",
         }}
       />
-      <div
-        style={{
-          position: "absolute",
-          width: "500px",
-          height: "500px",
-          borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%)",
-          bottom: "-250px",
-          left: "-250px",
-          animation: "floatOrb 25s ease-in-out infinite reverse",
-        }}
-      />
+      {/* Floating orbs - move around the viewport */}
+      <div className="auth-page-orb auth-page-orb-1" />
+      <div className="auth-page-orb auth-page-orb-2" />
+      <div className="auth-page-orb auth-page-orb-3" />
+      {/* Servintec-style floating items (icons) in background */}
+      <div className="auth-page-float-item auth-page-float-1" style={{ top: "10%", left: "6%" }}><span className="material-icons-outlined">code</span></div>
+      <div className="auth-page-float-item auth-page-float-2" style={{ top: "18%", right: "8%" }}><span className="material-icons-outlined">rocket_launch</span></div>
+      <div className="auth-page-float-item auth-page-float-3" style={{ bottom: "28%", left: "5%" }}><span className="material-icons-outlined">memory</span></div>
+      <div className="auth-page-float-item auth-page-float-4" style={{ bottom: "12%", right: "12%" }}><span className="material-icons-outlined">auto_awesome</span></div>
+      <div className="auth-page-float-item auth-page-float-5" style={{ top: "48%", left: "4%" }}><span className="material-icons-outlined">bolt</span></div>
+      <div className="auth-page-float-item auth-page-float-6" style={{ top: "58%", right: "6%" }}><span className="material-icons-outlined">storage</span></div>
+      <div className="auth-page-float-item auth-page-float-7" style={{ bottom: "48%", left: "10%" }}><span className="material-icons-outlined">public</span></div>
+      <div className="auth-page-float-item auth-page-float-8" style={{ top: "32%", right: "4%" }}><span className="material-icons-outlined">layers</span></div>
       <style>{`
-        @keyframes floatOrb {
+        @keyframes authPageFloatItem {
+          0%, 100% { opacity: 0.2; transform: translateY(0) scale(1) rotate(0deg); }
+          50% { opacity: 0.4; transform: translateY(-18px) scale(1.15) rotate(8deg); }
+        }
+        .auth-page-float-item {
+          position: absolute;
+          pointer-events: none;
+          z-index: 0;
+          color: rgba(147, 197, 253, 0.35);
+          font-size: 28px;
+          animation: authPageFloatItem 5s ease-in-out infinite;
+        }
+        .auth-page-float-1 { animation-delay: 0s; animation-duration: 5.2s; }
+        .auth-page-float-2 { animation-delay: 0.5s; animation-duration: 6s; }
+        .auth-page-float-3 { animation-delay: 1s; animation-duration: 5.5s; }
+        .auth-page-float-4 { animation-delay: 1.5s; animation-duration: 6.2s; }
+        .auth-page-float-5 { animation-delay: 0.3s; animation-duration: 5.8s; }
+        .auth-page-float-6 { animation-delay: 0.8s; animation-duration: 5.4s; }
+        .auth-page-float-7 { animation-delay: 1.2s; animation-duration: 6.5s; }
+        .auth-page-float-8 { animation-delay: 0.6s; animation-duration: 5.6s; }
+      `}</style>
+      <style>{`
+        @keyframes authPageBgDrift {
           0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(50px, 50px) scale(1.1); }
+          25% { transform: translate(2%, 1%) scale(1.02); }
+          50% { transform: translate(-1%, 2%) scale(0.98); }
+          75% { transform: translate(1%, -1%) scale(1.01); }
+        }
+        .auth-page-bg-drift {
+          background: radial-gradient(ellipse 80% 50% at 30% 40%, rgba(59, 130, 246, 0.25) 0%, transparent 50%),
+                      radial-gradient(ellipse 60% 80% at 70% 60%, rgba(147, 51, 234, 0.25) 0%, transparent 50%),
+                      radial-gradient(ellipse 50% 50% at 50% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+          animation: authPageBgDrift 20s ease-in-out infinite;
+        }
+        @keyframes authPageBgGlow {
+          0%, 100% {
+            background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.35) 0%, transparent 50%);
+          }
+          33% {
+            background: radial-gradient(circle at 80% 50%, rgba(147, 51, 234, 0.35) 0%, transparent 50%);
+          }
+          66% {
+            background: radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.35) 0%, transparent 50%);
+          }
+        }
+        .auth-page-bg-glow {
+          animation: authPageBgGlow 12s ease-in-out infinite;
+        }
+        @keyframes authPageOrb1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          25% { transform: translate(30px, -40px) scale(1.1); }
+          50% { transform: translate(-20px, 20px) scale(0.9); }
+          75% { transform: translate(40px, 30px) scale(1.05); }
+        }
+        @keyframes authPageOrb2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-50px, -30px) scale(1.15); }
+          66% { transform: translate(25px, 50px) scale(0.95); }
+        }
+        @keyframes authPageOrb3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(-30px, -50px) scale(1.2); }
+        }
+        .auth-page-orb {
+          position: absolute;
+          border-radius: 50%;
+          pointer-events: none;
+          filter: blur(40px);
+        }
+        .auth-page-orb-1 {
+          width: 320px;
+          height: 320px;
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, transparent 70%);
+          top: 10%;
+          left: 15%;
+          animation: authPageOrb1 18s ease-in-out infinite;
+        }
+        .auth-page-orb-2 {
+          width: 280px;
+          height: 280px;
+          background: radial-gradient(circle, rgba(147, 51, 234, 0.4) 0%, transparent 70%);
+          bottom: 20%;
+          right: 10%;
+          animation: authPageOrb2 22s ease-in-out infinite;
+        }
+        .auth-page-orb-3 {
+          width: 240px;
+          height: 240px;
+          background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 70%);
+          top: 50%;
+          left: 50%;
+          margin: -120px 0 0 -120px;
+          animation: authPageOrb3 15s ease-in-out infinite;
         }
       `}</style>
       <style>{`
-        @keyframes gradientShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
         @keyframes slideIn {
           from {
             opacity: 0;

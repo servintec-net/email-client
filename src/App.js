@@ -12,6 +12,7 @@ import FolderPane from "./components/FolderPane";
 import MessageListPane from "./components/MessageListPane";
 import RightPanel from "./components/RightPanel";
 import ReplyPanel from "./components/ReplyPanel";
+import Resizer from "./components/Resizer";
 import ChangePassword from "./components/ChangePassword";
 
 function App() {
@@ -51,6 +52,48 @@ function App() {
   const [showHistoryById, setShowHistoryById] = useState({});
   const [replyToEmail, setReplyToEmail] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
+
+  const FOLDER_PANE_MIN = 200;
+  const FOLDER_PANE_MAX = 420;
+  const FOLDER_PANE_DEFAULT = 260;
+  const LIST_PANE_MIN = 280;
+  const LIST_PANE_MAX = 600;
+  const LIST_PANE_DEFAULT = 380;
+  const PANE_WIDTHS_KEY = "emailLayoutPaneWidths";
+
+  const [folderPaneWidth, setFolderPaneWidth] = useState(() => {
+    try {
+      const raw = localStorage.getItem(PANE_WIDTHS_KEY);
+      if (!raw) return FOLDER_PANE_DEFAULT;
+      const data = JSON.parse(raw);
+      const w = Number(data.folderPaneWidth);
+      if (!Number.isFinite(w)) return FOLDER_PANE_DEFAULT;
+      return Math.min(FOLDER_PANE_MAX, Math.max(FOLDER_PANE_MIN, w));
+    } catch {
+      return FOLDER_PANE_DEFAULT;
+    }
+  });
+  const [listPaneWidth, setListPaneWidth] = useState(() => {
+    try {
+      const raw = localStorage.getItem(PANE_WIDTHS_KEY);
+      if (!raw) return LIST_PANE_DEFAULT;
+      const data = JSON.parse(raw);
+      const w = Number(data.listPaneWidth);
+      if (!Number.isFinite(w)) return LIST_PANE_DEFAULT;
+      return Math.min(LIST_PANE_MAX, Math.max(LIST_PANE_MIN, w));
+    } catch {
+      return LIST_PANE_DEFAULT;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        PANE_WIDTHS_KEY,
+        JSON.stringify({ folderPaneWidth, listPaneWidth })
+      );
+    } catch (_) {}
+  }, [folderPaneWidth, listPaneWidth]);
 
   useEffect(() => {
     if (!previewEmail) setReplyToEmail(null);
@@ -1274,15 +1317,17 @@ function App() {
         mailboxDisplayNamesCache={mailboxDisplayNamesCache}
       />
 
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      <div style={{ flex: 1, display: "flex", overflow: "hidden", minWidth: 0 }}>
         <div
           style={{
-            width: 620,
-            borderRight: "1px solid rgba(0,0,0,0.10)",
+            width: folderPaneWidth,
+            minWidth: FOLDER_PANE_MIN,
+            maxWidth: FOLDER_PANE_MAX,
+            flexShrink: 0,
             display: "flex",
             overflow: "hidden",
             background: "#fff",
-            flex: "0 0 620px",
+            borderRight: "1px solid rgba(0,0,0,0.08)",
           }}
         >
           <FolderPane
@@ -1332,7 +1377,28 @@ function App() {
               threadCacheRef.current.clear();
             }}
           />
+        </div>
 
+        <Resizer
+          defaultWidth={folderPaneWidth}
+          minWidth={FOLDER_PANE_MIN}
+          maxWidth={FOLDER_PANE_MAX}
+          onResize={setFolderPaneWidth}
+        />
+
+        <div
+          style={{
+            width: listPaneWidth,
+            minWidth: LIST_PANE_MIN,
+            maxWidth: LIST_PANE_MAX,
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            background: "#fff",
+            borderRight: "1px solid rgba(0,0,0,0.08)",
+          }}
+        >
           <MessageListPane
             selectedFolderPath={selectedFolderPath}
             listTitle={
@@ -1360,9 +1426,17 @@ function App() {
           />
         </div>
 
+        <Resizer
+          defaultWidth={listPaneWidth}
+          minWidth={LIST_PANE_MIN}
+          maxWidth={LIST_PANE_MAX}
+          onResize={setListPaneWidth}
+        />
+
         <div
           style={{
             flex: 1,
+            minWidth: 320,
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
