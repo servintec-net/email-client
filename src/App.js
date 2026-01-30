@@ -1638,6 +1638,7 @@ function App() {
                 <ReplyPanel
                   replyToEmail={replyToEmail}
                   mailboxId={selectedMailboxId}
+                  mailboxDisplayName={selectedMailbox ? getMailboxDisplayLabel(selectedMailbox, mailboxDisplayNamesCache) : ""}
                   onClose={() => setReplyToEmail(null)}
                   onSent={() => {
                     const cid = replyToEmail?.conversationId;

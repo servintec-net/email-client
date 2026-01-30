@@ -76,13 +76,14 @@ const ThreadCard = React.memo(function ThreadCard({
     padding: "12px 14px",
     cursor: "pointer",
     userSelect: "none",
-    background: isDraft
+    backgroundImage: isDraft
       ? "linear-gradient(135deg, rgba(255,251,235,0.95) 0%, rgba(254,243,199,0.9) 100%)"
       : `linear-gradient(rgba(255,255,255,${isExpanded ? 0.82 : 0.94}), rgba(255,255,255,${isExpanded ? 0.82 : 0.94})), ${gradient}`,
+    backgroundColor: "transparent",
     backgroundRepeat: "no-repeat",
     backgroundSize: "cover",
     borderBottom: isDraft ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(0,0,0,0.06)",
-    transition: "background 0.2s ease",
+    transition: "background-image 0.2s ease, background-color 0.2s ease",
   };
 
   const chevron = {

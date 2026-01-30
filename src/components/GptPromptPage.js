@@ -133,13 +133,14 @@ const GptPromptPage = ({ currentUser, onBack, authToken }) => {
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             placeholder={DEFAULT_PROMPT}
-            rows={6}
+            rows={20}
             style={{
               width: "100%",
               boxSizing: "border-box",
               padding: "12px 14px",
               fontSize: 14,
               lineHeight: 1.5,
+              minHeight: 420,
               border: "1px solid rgba(0,0,0,0.12)",
               borderRadius: 10,
               background: "rgba(0,0,0,0.02)",

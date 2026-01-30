@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { API_BASE } from "../utils/constants";
 import { getAuthHeaders } from "../utils/auth";
 
-const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
+const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent, mailboxDisplayName }) => {
   const fromAddr = replyToEmail?.from?.emailAddress;
   const senderName = fromAddr?.name || fromAddr?.address || "Unknown";
   const defaultTo = fromAddr?.address || "";
@@ -14,6 +14,7 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
   const [subject, setSubject] = useState(defaultSubject);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [generatingDraft, setGeneratingDraft] = useState(false);
   const [error, setError] = useState("");
   const [focusedId, setFocusedId] = useState(null);
   const bodyRef = useRef(null);
@@ -81,6 +82,42 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
     textTransform: "uppercase",
     color: "rgba(0,0,0,0.5)",
     marginBottom: 8,
+  };
+
+  const getEmailContentForDraft = () => {
+    const msg = replyToEmail;
+    if (!msg) return "";
+    const body = msg.body?.content;
+    if (body) return String(body);
+    return "";
+  };
+
+  const handleWriteAiDraft = async () => {
+    setError("");
+    setGeneratingDraft(true);
+    try {
+      const content = getEmailContentForDraft();
+      const res = await fetch(`${API_BASE}/me/ai-draft`, {
+        method: "POST",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          myName: mailboxDisplayName || "",
+          senderName: senderName || "",
+          subject: replyToEmail?.subject || "",
+          content: content || "",
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Failed to generate draft.");
+        return;
+      }
+      if (data.draft != null) setBody(String(data.draft));
+    } catch (err) {
+      setError(err.message || "Failed to generate draft.");
+    } finally {
+      setGeneratingDraft(false);
+    }
   };
 
   const getInputStyle = (id) => ({
@@ -246,7 +283,46 @@ const ReplyPanel = ({ replyToEmail, mailboxId, onClose, onSent }) => {
             />
           </div>
           <div style={{ marginBottom: 0 }}>
-            <label style={fieldLabel} htmlFor="reply-body">Message</label>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8, flexWrap: "wrap", gap: 8 }}>
+              <label style={fieldLabel} htmlFor="reply-body">Message</label>
+              <button
+                type="button"
+                onClick={handleWriteAiDraft}
+                disabled={generatingDraft || sending}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "6px 12px",
+                  fontSize: 12,
+                  fontWeight: 600,
+                  borderRadius: 8,
+                  border: "1px solid rgba(26,115,232,0.3)",
+                  background: "rgba(26,115,232,0.1)",
+                  color: "#1a73e8",
+                  cursor: generatingDraft || sending ? "wait" : "pointer",
+                  opacity: generatingDraft || sending ? 0.7 : 1,
+                }}
+                onMouseEnter={(e) => {
+                  if (!generatingDraft && !sending) {
+                    e.currentTarget.style.background = "rgba(26,115,232,0.16)";
+                    e.currentTarget.style.borderColor = "rgba(26,115,232,0.4)";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(26,115,232,0.1)";
+                  e.currentTarget.style.borderColor = "rgba(26,115,232,0.3)";
+                }}
+              >
+                <span
+                  className="material-icons-outlined"
+                  style={{ fontSize: 16 }}
+                >
+                  {generatingDraft ? "hourglass_empty" : "smart_toy"}
+                </span>
+                {generatingDraft ? "Generating…" : "Write an AI draft"}
+              </button>
+            </div>
             <textarea
               ref={bodyRef}
               id="reply-body"
