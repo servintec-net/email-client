@@ -253,45 +253,6 @@ const EmailRow = React.memo(function EmailRow({
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={() => handleAction("reply")}
-            style={{
-              width: "100%",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              fontSize: 12.5,
-              fontWeight: 650,
-              color: "rgba(0,0,0,0.85)",
-              transition: "background 120ms ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(0,0,0,0.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "transparent";
-            }}
-            title="Reply"
-          >
-            <span className="material-icons-outlined" style={{ fontSize: 18, opacity: 0.85 }}>
-              reply
-            </span>
-            Reply
-          </button>
-
-          <div
-            style={{
-              height: 1,
-              background: "rgba(0,0,0,0.08)",
-              margin: "4px 0",
-            }}
-          />
-
-          <button
             onClick={() => handleAction("markRead")}
             disabled={msg.isRead}
             style={{

@@ -62,6 +62,7 @@ const TopBar = React.memo(function TopBar({
   mailboxOrderIds,
   onMailboxOrderChange,
   loadingList,
+  loadingCounts = false,
   onRefresh,
   onSelectMailbox,
   onConnectMailbox,
@@ -190,22 +191,22 @@ const TopBar = React.memo(function TopBar({
               selectedMailboxId={selectedMailbox?.id}
               onSelectMailbox={onSelectMailbox}
               mailboxDisplayNamesCache={mailboxDisplayNamesCache}
-              disabled={loadingList}
+              disabled={loadingList || loadingCounts}
             />
           )}
           <button
             onClick={onRefresh}
-            disabled={loadingList}
+            disabled={loadingList || loadingCounts}
             style={{
               ...refreshButtonStyle,
-              cursor: loadingList ? "default" : "pointer",
-              opacity: loadingList ? 0.7 : 1,
+              cursor: loadingList || loadingCounts ? "default" : "pointer",
+              opacity: loadingList || loadingCounts ? 0.7 : 1,
             }}
             title="Refresh"
             aria-label="Refresh"
             className="topbar-refresh-btn"
           >
-            {loadingList ? (
+            {loadingList || loadingCounts ? (
               <span className="material-icons-outlined" style={{ fontSize: 20, animation: "spin 1s linear infinite" }}>
                 refresh
               </span>

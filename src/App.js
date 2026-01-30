@@ -54,6 +54,7 @@ function App() {
   const [showHistoryById, setShowHistoryById] = useState({});
   const [replyToEmail, setReplyToEmail] = useState(null);
   const [hoveredId, setHoveredId] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   const FOLDER_PANE_MIN = 200;
   const FOLDER_PANE_MAX = 420;
@@ -625,10 +626,15 @@ function App() {
           });
           await refreshFolderCounts();
         } else if (action === "delete") {
-          await fetch(`${API_BASE}/email/${emailId}?mailboxId=${selectedMailboxId}`, {
+          const deleteRes = await fetch(`${API_BASE}/email/${emailId}?mailboxId=${selectedMailboxId}`, {
             method: "DELETE",
             headers: getAuthHeaders(),
           });
+          if (!deleteRes.ok) {
+            const errData = await deleteRes.json().catch(() => ({}));
+            setNotification({ message: errData.error || "Failed to delete email", type: "error" });
+            return;
+          }
           // Remove from UI
           setEmails((prev) => prev.filter((m) => m.id !== emailId));
           if (selectedEmailId === emailId) {
@@ -637,6 +643,7 @@ function App() {
           }
           setThreadEmails((prev) => prev.filter((m) => m.id !== emailId));
           await refreshFolderCounts();
+          setNotification({ message: "Email deleted", type: "success" });
         } else if (action === "moveToInbox") {
           await fetch(`${API_BASE}/email/${emailId}/move?mailboxId=${selectedMailboxId}`, {
             method: "POST",
@@ -1020,6 +1027,13 @@ function App() {
     }
   }, [selectedMailboxId, authToken, refreshFolderCounts]);
 
+  // Auto-dismiss notification after 4 seconds
+  useEffect(() => {
+    if (!notification) return;
+    const t = setTimeout(() => setNotification(null), 4000);
+    return () => clearTimeout(t);
+  }, [notification]);
+
   // Fetch all connected mailbox display names at first (backend cache). Used for mailbox selector / top bar.
   useEffect(() => {
     if (!authToken || mailboxes.length === 0) {
@@ -1391,6 +1405,7 @@ function App() {
         mailboxOrderIds={mailboxOrderIds}
         onMailboxOrderChange={setMailboxOrderIds}
         loadingList={loadingList}
+        loadingCounts={loadingCounts}
         onRefresh={refreshInbox}
         onSelectMailbox={setSelectedMailboxId}
         onConnectMailbox={connectMailbox}
@@ -1676,6 +1691,35 @@ function App() {
           </div>
         </div>
       </div>
+
+      {notification && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "12px 20px",
+            borderRadius: 12,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08)",
+            background: notification.type === "error" ? "rgba(220,53,69,0.95)" : "rgba(0,0,0,0.88)",
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 500,
+            zIndex: 10000,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <span className="material-icons-outlined" style={{ fontSize: 20 }}>
+            {notification.type === "error" ? "error_outline" : "check_circle"}
+          </span>
+          {notification.message}
+        </div>
+      )}
     </div>
   );
 }
