@@ -1,16 +1,3 @@
-import {
-    AVATAR_COLORS,
-} from "./constants";
-
-export const getAvatarColor = (name) => {
-    if (!name) return AVATAR_COLORS[0];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-};
-
 export const hashStringToInt = (str = "") => {
     let h = 2166136261;
     for (let i = 0; i < str.length; i++) {
@@ -38,15 +25,6 @@ export const getInitials = (sender) => {
     return parts.length > 1
         ? parts[0][0] + parts[1][0]
         : parts[0][0];
-};
-
-/** Initials from a display name (e.g. username "JohnDoe" -> "JD") */
-export const getInitialsFromName = (name) => {
-    if (!name || typeof name !== "string") return "?";
-    const s = name.trim();
-    if (!s) return "?";
-    if (s.length === 1) return s[0].toUpperCase();
-    return (s[0] + s[s.length - 1]).toUpperCase();
 };
 
 /** For connected mailbox UI: no cache → email only; cache → "Name <email>". */
@@ -180,11 +158,6 @@ export function getQuotedHtmlParts(html) {
 
     return { main, history };
 }
-
-export const trimQuotedHtml = (html) => {
-    const { main } = getQuotedHtmlParts(html || "");
-    return main;
-};
 
 /** Trim plain-text preview to main content only (no quoted/history portion). */
 export function trimQuotedText(text) {

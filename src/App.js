@@ -1,20 +1,26 @@
 // App.js
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { flattenFolderTree, getMailboxDisplayLabel, formatFullDateTime } from "./utils/helper";
-import { FOLDER_TREE, API_BASE, WS_BASE, LABELS_CONFIG } from "./utils/constants";
+import { flattenFolderTree, getMailboxDisplayLabel } from "./utils/helper";
+import {
+  FOLDER_TREE,
+  API_BASE,
+  WS_BASE,
+  LAYOUT_KEYS,
+  PANE_LIMITS,
+  TOGGLE_ONLY_PATHS,
+  EXPANDED_FOLDERS_DEFAULT,
+} from "./utils/constants";
+import { getJson, setJson } from "./utils/storage";
 import { getAuthToken, setAuthToken, removeAuthToken, getAuthHeaders, getAuthHeadersWithToken } from "./utils/auth";
 
 import LoginForm from "./components/LoginForm";
-import MailboxSelector from "./components/MailboxSelector";
 import MailboxManagement from "./components/MailboxManagement";
-import TopBar from "./components/TopBar";
-import FolderPane from "./components/FolderPane";
-import MessageListPane from "./components/MessageListPane";
-import RightPanel from "./components/RightPanel";
-import ReplyPanel from "./components/ReplyPanel";
-import Resizer from "./components/Resizer";
 import ChangePassword from "./components/ChangePassword";
 import GptPromptPage from "./components/GptPromptPage";
+import LoadingScreen from "./components/views/LoadingScreen";
+import NoMailboxView from "./components/views/NoMailboxView";
+import SelectMailboxView from "./components/views/SelectMailboxView";
+import MailLayout from "./components/views/MailLayout";
 
 function App() {
   // Auth state
@@ -56,65 +62,31 @@ function App() {
   const [hoveredId, setHoveredId] = useState(null);
   const [notification, setNotification] = useState(null);
 
-  const FOLDER_PANE_MIN = 200;
-  const FOLDER_PANE_MAX = 420;
-  const FOLDER_PANE_DEFAULT = 260;
-  const LIST_PANE_MIN = 280;
-  const LIST_PANE_MAX = 600;
-  const LIST_PANE_DEFAULT = 380;
-  const PANE_WIDTHS_KEY = "emailLayoutPaneWidths";
-  const MAILBOX_ORDER_KEY = "emailLayoutMailboxOrder";
-  const SELECTED_EMAIL_KEY = "emailLayoutSelectedEmail";
-
   const getSelectedEmailContextKey = (mailboxId, folderPath, label, isLabelsMode) =>
     `${mailboxId}:${isLabelsMode && label ? `label:${label}` : folderPath || "inbox"}`;
 
   const [mailboxOrderIds, setMailboxOrderIds] = useState(() => {
-    try {
-      const raw = localStorage.getItem(MAILBOX_ORDER_KEY);
-      if (!raw) return [];
-      const arr = JSON.parse(raw);
-      return Array.isArray(arr) ? arr : [];
-    } catch {
-      return [];
-    }
+    const arr = getJson(LAYOUT_KEYS.MAILBOX_ORDER, []);
+    return Array.isArray(arr) ? arr : [];
   });
 
   const [folderPaneWidth, setFolderPaneWidth] = useState(() => {
-    try {
-      const raw = localStorage.getItem(PANE_WIDTHS_KEY);
-      if (!raw) return FOLDER_PANE_DEFAULT;
-      const data = JSON.parse(raw);
-      const w = Number(data.folderPaneWidth);
-      if (!Number.isFinite(w)) return FOLDER_PANE_DEFAULT;
-      return Math.min(FOLDER_PANE_MAX, Math.max(FOLDER_PANE_MIN, w));
-    } catch {
-      return FOLDER_PANE_DEFAULT;
-    }
+    const data = getJson(LAYOUT_KEYS.PANE_WIDTHS, {});
+    const w = Number(data?.folderPaneWidth);
+    if (!Number.isFinite(w)) return PANE_LIMITS.FOLDER_DEFAULT;
+    return Math.min(PANE_LIMITS.FOLDER_MAX, Math.max(PANE_LIMITS.FOLDER_MIN, w));
   });
   const [listPaneWidth, setListPaneWidth] = useState(() => {
-    try {
-      const raw = localStorage.getItem(PANE_WIDTHS_KEY);
-      if (!raw) return LIST_PANE_DEFAULT;
-      const data = JSON.parse(raw);
-      const w = Number(data.listPaneWidth);
-      if (!Number.isFinite(w)) return LIST_PANE_DEFAULT;
-      return Math.min(LIST_PANE_MAX, Math.max(LIST_PANE_MIN, w));
-    } catch {
-      return LIST_PANE_DEFAULT;
-    }
+    const data = getJson(LAYOUT_KEYS.PANE_WIDTHS, {});
+    const w = Number(data?.listPaneWidth);
+    if (!Number.isFinite(w)) return PANE_LIMITS.LIST_DEFAULT;
+    return Math.min(PANE_LIMITS.LIST_MAX, Math.max(PANE_LIMITS.LIST_MIN, w));
   });
 
   useEffect(() => {
-    try {
-      localStorage.setItem(
-        PANE_WIDTHS_KEY,
-        JSON.stringify({ folderPaneWidth, listPaneWidth })
-      );
-    } catch (_) { }
+    setJson(LAYOUT_KEYS.PANE_WIDTHS, { folderPaneWidth, listPaneWidth });
   }, [folderPaneWidth, listPaneWidth]);
 
-  // Sync mailbox order when mailboxes list changes (e.g. after disconnect): remove missing ids, append new ones
   useEffect(() => {
     if (mailboxes.length === 0) return;
     setMailboxOrderIds((prev) => {
@@ -127,11 +99,8 @@ function App() {
     });
   }, [mailboxes]);
 
-  // Persist mailbox order when user reorders
   useEffect(() => {
-    try {
-      localStorage.setItem(MAILBOX_ORDER_KEY, JSON.stringify(mailboxOrderIds));
-    } catch (_) { }
+    setJson(LAYOUT_KEYS.MAILBOX_ORDER, mailboxOrderIds);
   }, [mailboxOrderIds]);
 
   const sortedMailboxes = useMemo(() => {
@@ -154,16 +123,7 @@ function App() {
   const allFolderPaths = useMemo(() => flattenFolderTree(FOLDER_TREE), []);
   const [selectedFolderPath, setSelectedFolderPath] = useState(allFolderPaths?.[0] || "Inbox");
 
-  const [expandedFolders, setExpandedFolders] = useState(
-    () =>
-      new Set([
-        "Inbox",
-        "Inbox > Applications",
-        "Inbox > Interviews",
-        "Inbox > Interviews > Interview Request",
-        "Inbox > Offer",
-      ])
-  );
+  const [expandedFolders, setExpandedFolders] = useState(() => new Set(EXPANDED_FOLDERS_DEFAULT));
 
   const [hoveredFolderPath, setHoveredFolderPath] = useState(null);
   const [folderCounts, setFolderCounts] = useState({});
@@ -177,17 +137,6 @@ function App() {
   const threadAbortRef = useRef(null);
   const threadCacheRef = useRef(new Map());
 
-  // must match FolderTreeView.jsx
-  const TOGGLE_ONLY = useMemo(
-    () =>
-      new Set([
-        "Inbox > Applications",
-        "Inbox > Interviews",
-        "Inbox > Interviews > Interview Request",
-        "Inbox > Offer",
-      ]),
-    []
-  );
 
   // Auth functions
   const handleLogin = useCallback(async (user, token) => {
@@ -488,7 +437,7 @@ function App() {
         const contextKey = getSelectedEmailContextKey(selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab === "labels");
         let cachedId = null;
         try {
-          const raw = localStorage.getItem(SELECTED_EMAIL_KEY);
+          const raw = localStorage.getItem(LAYOUT_KEYS.SELECTED_EMAIL);
           const stored = raw ? JSON.parse(raw) : {};
           cachedId = stored[contextKey] ?? null;
         } catch (_) {}
@@ -576,10 +525,10 @@ function App() {
       if (id != null && selectedMailboxId != null) {
         const contextKey = getSelectedEmailContextKey(selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab === "labels");
         try {
-          const raw = localStorage.getItem(SELECTED_EMAIL_KEY);
+          const raw = localStorage.getItem(LAYOUT_KEYS.SELECTED_EMAIL);
           const stored = raw ? JSON.parse(raw) : {};
           stored[contextKey] = id;
-          localStorage.setItem(SELECTED_EMAIL_KEY, JSON.stringify(stored));
+          localStorage.setItem(LAYOUT_KEYS.SELECTED_EMAIL, JSON.stringify(stored));
         } catch (_) {}
       }
     },
@@ -729,10 +678,10 @@ function App() {
       // - otherwise: process just targetPath
       let folderPathsToProcess = [];
 
-      if (TOGGLE_ONLY.has(targetPath)) {
+      if (TOGGLE_ONLY_PATHS.has(targetPath)) {
         folderPathsToProcess = allFolderPaths
           .filter((p) => p === targetPath || p.startsWith(targetPath + " > "))
-          .filter((p) => !TOGGLE_ONLY.has(p));
+          .filter((p) => !TOGGLE_ONLY_PATHS.has(p));
       } else {
         folderPathsToProcess = [targetPath];
       }
@@ -823,7 +772,7 @@ function App() {
         await refreshFolderCounts();
       }
     },
-    [authToken, selectedMailboxId, TOGGLE_ONLY, allFolderPaths, selectedFolderPath, refreshFolderCounts]
+    [authToken, selectedMailboxId, allFolderPaths, selectedFolderPath, refreshFolderCounts]
   );
 
   // ✅ Mark All As Read (used by FolderTreeView right-click)
@@ -832,10 +781,10 @@ function App() {
       if (!authToken || !selectedMailboxId || !targetPath) return;
 
       let folderPathsToProcess = [];
-      if (TOGGLE_ONLY.has(targetPath)) {
+      if (TOGGLE_ONLY_PATHS.has(targetPath)) {
         folderPathsToProcess = allFolderPaths
           .filter((p) => p === targetPath || p.startsWith(targetPath + " > "))
-          .filter((p) => !TOGGLE_ONLY.has(p));
+          .filter((p) => !TOGGLE_ONLY_PATHS.has(p));
       } else {
         folderPathsToProcess = [targetPath];
       }
@@ -915,7 +864,7 @@ function App() {
         await refreshFolderCounts();
       }
     },
-    [authToken, selectedMailboxId, TOGGLE_ONLY, allFolderPaths, selectedFolderPath, refreshFolderCounts]
+    [authToken, selectedMailboxId, allFolderPaths, selectedFolderPath, refreshFolderCounts]
   );
 
   // Initialize auth on mount (mailboxes are loaded by the "Reload mailboxes when auth token is available" effect)
@@ -1086,14 +1035,7 @@ function App() {
     setSelectedMailboxId(null);
   }, []);
 
-  // Loading state
-  if (loadingAuth) {
-    return (
-      <div style={{ height: "100vh", display: "grid", placeItems: "center" }}>
-        <div style={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }}>Loading...</div>
-      </div>
-    );
-  }
+  if (loadingAuth) return <LoadingScreen />;
 
   // Not authenticated
   if (!authToken || !currentUser) {
@@ -1140,587 +1082,116 @@ function App() {
     );
   }
 
-  // Authenticated but no connected mailboxes
   const connectedMailboxes = mailboxes.filter((mb) => mb.is_connected);
   if (connectedMailboxes.length === 0) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          flexDirection: "column",
-          background: "linear-gradient(135deg, rgba(11,95,255,0.02), rgba(226,33,15,0.02))",
-          overflowY: "auto",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            padding: "40px 24px 24px",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 20,
-          }}
-        >
-          <img
-            src="/servintec-logo.png"
-            alt="Servintec"
-            style={{
-              height: 60,
-              width: "auto",
-              objectFit: "contain",
-            }}
-            onError={(e) => {
-              e.target.style.display = "none";
-            }}
-          />
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Welcome, {currentUser.username}!</h2>
-          <p style={{ margin: 0, color: "rgba(0,0,0,0.6)", fontSize: 14 }}>
-            Connect your Microsoft mailbox to get started.
-          </p>
-          <button
-            onClick={connectMailbox}
-            style={{
-              padding: "12px 24px",
-              border: "1px solid rgba(0,0,0,0.12)",
-              borderRadius: 10,
-              background: "#0b5fff",
-              color: "#fff",
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
-            <span className="material-icons-outlined" style={{ fontSize: 18 }}>
-              add
-            </span>
-            Connect Mailbox
-          </button>
-        </div>
-
-        {/* Mailboxes List */}
-        {mailboxes.length > 0 ? (
-          <div style={{ padding: "0 24px 40px", maxWidth: 800, margin: "0 auto", width: "100%" }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, margin: "0 0 16px 0", color: "rgba(0,0,0,0.8)" }}>
-              Your Mailboxes
-              {mailboxesTotal != null && (
-                <span style={{ fontWeight: 500, color: "rgba(0,0,0,0.55)", marginLeft: 8 }}>
-                  ({mailboxes.length}{mailboxesTotal !== mailboxes.length ? ` of ${mailboxesTotal}` : ""})
-                </span>
-              )}
-            </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              {mailboxes.map((mailbox) => (
-                <div
-                  key={mailbox.id}
-                  style={{
-                    padding: "16px 20px",
-                    background: "#fff",
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    borderRadius: 12,
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 16,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 4 }}>
-                      <span
-                        className="material-icons-outlined"
-                        style={{
-                          fontSize: 24,
-                          color: mailbox.is_connected ? "#0b5fff" : "rgba(0,0,0,0.4)",
-                        }}
-                      >
-                        {mailbox.is_connected ? "mail" : "mail_outline"}
-                      </span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: 15,
-                            fontWeight: 600,
-                            color: "rgba(0,0,0,0.9)",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {getMailboxDisplayLabel(mailbox, mailboxDisplayNamesCache)}
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
-                          <span
-                            style={{
-                              fontSize: 12,
-                              padding: "4px 8px",
-                              borderRadius: 4,
-                              background: mailbox.is_connected ? "#e3f2fd" : "#f5f5f5",
-                              color: mailbox.is_connected ? "#1976d2" : "rgba(0,0,0,0.6)",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {mailbox.is_connected ? "Connected" : "Disconnected"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {mailbox.is_connected && (
-                    <button
-                      onClick={() => setSelectedMailboxId(mailbox.id)}
-                      style={{
-                        padding: "8px 16px",
-                        border: "1px solid rgba(0,0,0,0.12)",
-                        borderRadius: 8,
-                        background: "#0b5fff",
-                        color: "#fff",
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Open
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            {mailboxesHasMore && (
-              <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 12, alignItems: "center" }}>
-                <button
-                  onClick={() => loadMailboxes({ append: true })}
-                  disabled={mailboxesLoadingMore}
-                  style={{
-                    padding: "10px 20px",
-                    border: "1px solid rgba(0,0,0,0.12)",
-                    borderRadius: 10,
-                    background: "#fff",
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: mailboxesLoadingMore ? "default" : "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  {mailboxesLoadingMore ? "Loading..." : "Load more"}
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div
-            style={{
-              padding: "40px 24px",
-              textAlign: "center",
-              color: "rgba(0,0,0,0.6)",
-              maxWidth: 600,
-              margin: "0 auto",
-            }}
-          >
-            <span
-              className="material-icons-outlined"
-              style={{
-                fontSize: 64,
-                color: "rgba(0,0,0,0.3)",
-                marginBottom: 16,
-                display: "block",
-              }}
-            >
-              mail_outline
-            </span>
-            <p style={{ fontSize: 16, margin: "0 0 8px 0", fontWeight: 600, color: "rgba(0,0,0,0.8)" }}>
-              No mailboxes connected
-            </p>
-            <p style={{ fontSize: 14, margin: 0 }}>
-              Click "Connect Mailbox" above to connect your first Microsoft mailbox and start managing your emails.
-            </p>
-          </div>
-        )}
-      </div>
+      <NoMailboxView
+        currentUser={currentUser}
+        mailboxes={mailboxes}
+        mailboxDisplayNamesCache={mailboxDisplayNamesCache}
+        mailboxesTotal={mailboxesTotal}
+        mailboxesHasMore={mailboxesHasMore}
+        mailboxesLoadingMore={mailboxesLoadingMore}
+        onConnectMailbox={connectMailbox}
+        onSelectMailboxId={setSelectedMailboxId}
+        onLoadMoreMailboxes={(opts) => loadMailboxes(opts)}
+        getMailboxDisplayLabel={getMailboxDisplayLabel}
+      />
     );
   }
 
-  // No mailbox selected
   if (!selectedMailboxId) {
     return (
-      <div
-        style={{
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexDirection: "column",
-          gap: 20,
-          background: "linear-gradient(135deg, rgba(11,95,255,0.02), rgba(226,33,15,0.02))",
-        }}
-      >
-        <img
-          src="/servintec-logo.png"
-          alt="Servintec"
-          style={{
-            height: 50,
-            width: "auto",
-            objectFit: "contain",
-            marginBottom: 8,
-          }}
-          onError={(e) => {
-            // Fallback if logo not found
-            e.target.style.display = "none";
-          }}
-        />
-        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Select a mailbox</h2>
-        <MailboxSelector
-          mailboxes={sortedMailboxes}
-          orderIds={mailboxOrderIds}
-          onOrderChange={setMailboxOrderIds}
-          selectedMailboxId={selectedMailboxId}
-          onSelectMailbox={setSelectedMailboxId}
-          onConnectNew={connectMailbox}
-          mailboxDisplayNamesCache={mailboxDisplayNamesCache}
-        />
-      </div>
+      <SelectMailboxView
+        sortedMailboxes={sortedMailboxes}
+        mailboxOrderIds={mailboxOrderIds}
+        onMailboxOrderChange={setMailboxOrderIds}
+        selectedMailboxId={selectedMailboxId}
+        onSelectMailbox={setSelectedMailboxId}
+        onConnectNew={connectMailbox}
+        mailboxDisplayNamesCache={mailboxDisplayNamesCache}
+      />
     );
   }
 
-  // Main app (mailbox selected)
+  const clearEmailState = () => {
+    setSelectedEmailId(null);
+    setPreviewEmail(null);
+    setThreadEmails([]);
+    setExpandedById({});
+    setShowHistoryById({});
+    threadCacheRef.current?.clear();
+  };
+
   return (
-    <div
-      style={{
-        fontFamily: "system-ui",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
+    <MailLayout
+      folderPaneWidth={folderPaneWidth}
+      listPaneWidth={listPaneWidth}
+      setFolderPaneWidth={setFolderPaneWidth}
+      setListPaneWidth={setListPaneWidth}
+      paneLimits={PANE_LIMITS}
+      currentUser={currentUser}
+      selectedMailbox={selectedMailbox}
+      sortedMailboxes={sortedMailboxes}
+      mailboxOrderIds={mailboxOrderIds}
+      setMailboxOrderIds={setMailboxOrderIds}
+      loadingList={loadingList}
+      loadingCounts={loadingCounts}
+      refreshInbox={refreshInbox}
+      setSelectedMailboxId={setSelectedMailboxId}
+      connectMailbox={connectMailbox}
+      onManageMailboxes={() => setShowMailboxManagement(true)}
+      onSignOut={handleSignOut}
+      onChangePassword={() => setShowChangePassword(true)}
+      onGptPrompt={() => setShowGptPrompt(true)}
+      mailboxDisplayNamesCache={mailboxDisplayNamesCache}
+      leftPaneTab={leftPaneTab}
+      setLeftPaneTab={(tab) => {
+        setLeftPaneTab(tab);
+        if (tab === "labels") {
+          setEmails([]);
+          setHasMoreEmails(false);
+          hasMoreEmailsRef.current = false;
+        }
       }}
-    >
-      <TopBar
-        currentUser={currentUser}
-        selectedMailbox={selectedMailbox}
-        mailboxes={sortedMailboxes}
-        mailboxOrderIds={mailboxOrderIds}
-        onMailboxOrderChange={setMailboxOrderIds}
-        loadingList={loadingList}
-        loadingCounts={loadingCounts}
-        onRefresh={refreshInbox}
-        onSelectMailbox={setSelectedMailboxId}
-        onConnectMailbox={connectMailbox}
-        onManageMailboxes={() => setShowMailboxManagement(true)}
-        onSignOut={handleSignOut}
-        onChangePassword={() => setShowChangePassword(true)}
-        onGptPrompt={() => setShowGptPrompt(true)}
-        mailboxDisplayNamesCache={mailboxDisplayNamesCache}
-      />
-
-      <div style={{ flex: 1, display: "flex", overflow: "hidden", minWidth: 0 }}>
-        <div
-          style={{
-            width: folderPaneWidth,
-            minWidth: FOLDER_PANE_MIN,
-            maxWidth: FOLDER_PANE_MAX,
-            flexShrink: 0,
-            display: "flex",
-            overflow: "hidden",
-            background: "#fff",
-            borderRight: "1px solid rgba(0,0,0,0.08)",
-          }}
-        >
-          <FolderPane
-            tree={FOLDER_TREE}
-            activeTab={leftPaneTab}
-            onTabChange={(tab) => {
-              setLeftPaneTab(tab);
-              if (tab === "folders") {
-                setSelectedLabel(null);
-              } else {
-                setEmails([]);
-                setHasMoreEmails(false);
-                hasMoreEmailsRef.current = false;
-              }
-              setSelectedEmailId(null);
-              setPreviewEmail(null);
-              setThreadEmails([]);
-              setExpandedById({});
-              setShowHistoryById({});
-              threadCacheRef.current.clear();
-            }}
-            selectedFolderPath={selectedFolderPath}
-            hoveredFolderPath={hoveredFolderPath}
-            setHoveredFolderPath={setHoveredFolderPath}
-            expandedFolders={expandedFolders}
-            setExpandedFolders={setExpandedFolders}
-            folderCounts={folderCounts}
-            onMarkAllAsUnread={markAllAsUnread}
-            onMarkAllAsRead={markAllAsRead}
-            onSelectFolderPath={(path) => {
-              setSelectedFolderPath(path);
-              setSelectedEmailId(null);
-              setPreviewEmail(null);
-              setThreadEmails([]);
-              setExpandedById({});
-              setShowHistoryById({});
-              threadCacheRef.current.clear();
-            }}
-            selectedLabel={selectedLabel}
-            onSelectLabel={(category) => {
-              setSelectedLabel(category);
-              setSelectedEmailId(null);
-              setPreviewEmail(null);
-              setThreadEmails([]);
-              setExpandedById({});
-              setShowHistoryById({});
-              threadCacheRef.current.clear();
-            }}
-          />
-        </div>
-
-        <Resizer
-          defaultWidth={folderPaneWidth}
-          minWidth={FOLDER_PANE_MIN}
-          maxWidth={FOLDER_PANE_MAX}
-          onResize={setFolderPaneWidth}
-        />
-
-        <div
-          style={{
-            width: listPaneWidth,
-            minWidth: LIST_PANE_MIN,
-            maxWidth: LIST_PANE_MAX,
-            flexShrink: 0,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            background: "#fff",
-            borderRight: "1px solid rgba(0,0,0,0.08)",
-          }}
-        >
-          <MessageListPane
-            selectedFolderPath={selectedFolderPath}
-            listTitle={
-              leftPaneTab === "labels"
-                ? selectedLabel
-                  ? [...LABELS_CONFIG.jobBoards, ...LABELS_CONFIG.roles].find((l) => l.category === selectedLabel)?.display ?? selectedLabel
-                  : "Select a label"
-                : null
-            }
-            emails={emails}
-            loadingList={loadingList || loadingCounts}
-            loadingMore={loadingMore}
-            hasMoreEmails={hasMoreEmails}
-            hasMoreEmailsRef={hasMoreEmailsRef}
-            loadingMoreRef={loadingMoreRef}
-            selectedEmailId={selectedEmailId}
-            hoveredId={hoveredId}
-            setHoveredId={setHoveredId}
-            onSelectEmail={handleSelectEmail}
-            folderCounts={folderCounts}
-            authToken={authToken}
-            selectedMailboxId={selectedMailboxId}
-            onEmailAction={handleEmailAction}
-            onLoadMore={() => loadEmails(true)}
-          />
-        </div>
-
-        <Resizer
-          defaultWidth={listPaneWidth}
-          minWidth={LIST_PANE_MIN}
-          maxWidth={LIST_PANE_MAX}
-          onResize={setListPaneWidth}
-        />
-
-        <div
-          style={{
-            flex: 1,
-            minWidth: 320,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            background: "linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.01))",
-          }}
-        >
-          {/* Right pane toolbar — one line: icon + subject + clock + time when preview */}
-          <div
-            style={{
-              flexShrink: 0,
-              height: 40,
-              padding: "0 14px",
-              borderBottom: "1px solid rgba(0,0,0,0.06)",
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              minWidth: 0,
-              background: "#fff",
-              boxSizing: "border-box",
-            }}
-          >
-            <span
-              className="material-icons-outlined"
-              style={{ fontSize: 20, color: "rgba(0,0,0,0.7)", flexShrink: 0 }}
-              aria-hidden
-            >
-              {replyToEmail
-                ? "reply"
-                : previewEmail
-                  ? "mail"
-                  : "mail_outline"}
-            </span>
-            {replyToEmail ? (
-              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.85)" }}>Reply</div>
-            ) : previewEmail ? (
-              <>
-                <div
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "rgba(0,0,0,0.88)",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    minWidth: 0,
-                    flex: 1,
-                  }}
-                  title={`${(previewEmail.subject || "").replace(/^\s*Re:\s*/i, "").trim() || "No subject"} — ${previewEmail.from?.emailAddress?.name || "Unknown Sender"} · ${formatFullDateTime(previewEmail.receivedDateTime)}`}
-                >
-                  {(previewEmail.subject || "").replace(/^\s*Re:\s*/i, "").trim() || "No subject"}
-                </div>
-                <span
-                  className="material-icons-outlined"
-                  style={{ fontSize: 14, color: "rgba(0,0,0,0.45)", flexShrink: 0 }}
-                  aria-hidden
-                  title={formatFullDateTime(previewEmail.receivedDateTime)}
-                >
-                  schedule
-                </span>
-                <span
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 500,
-                    color: "rgba(0,0,0,0.5)",
-                    whiteSpace: "nowrap",
-                    flexShrink: 0,
-                  }}
-                  title={formatFullDateTime(previewEmail.receivedDateTime)}
-                >
-                  {formatFullDateTime(previewEmail.receivedDateTime)}
-                </span>
-              </>
-            ) : (
-              <div style={{ fontSize: 13, fontWeight: 600, color: "rgba(0,0,0,0.85)" }}>Preview</div>
-            )}
-          </div>
-
-          {/* Content area — flex layout, no scroll here so empty state never shows scrollbar */}
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-              padding: 8,
-              background: "rgba(0,0,0,0.02)",
-            }}
-          >
-            {!previewEmail && (
-              <div
-                style={{
-                  flex: 1,
-                  minHeight: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 8,
-                  color: "rgba(0,0,0,0.45)",
-                  fontSize: 14,
-                  transform: "translateY(-50px)",
-                }}
-              >
-                <span className="material-icons-outlined" style={{ fontSize: 48, opacity: 0.5 }}>
-                  visibility
-                </span>
-                <span style={{ fontWeight: 500 }}>Select an email to preview</span>
-                <span style={{ fontSize: 12, fontWeight: 400 }}>Preview appears here</span>
-              </div>
-            )}
-
-            {replyToEmail && (
-              <div style={{ flex: 1, minHeight: 0, overflow: "auto", scrollbarGutter: "stable" }}>
-                <ReplyPanel
-                  replyToEmail={replyToEmail}
-                  mailboxId={selectedMailboxId}
-                  mailboxDisplayName={selectedMailbox ? getMailboxDisplayLabel(selectedMailbox, mailboxDisplayNamesCache) : ""}
-                  onClose={() => setReplyToEmail(null)}
-                  onSent={() => {
-                    const cid = replyToEmail?.conversationId;
-                    if (cid) {
-                      threadCacheRef.current.delete(cid);
-                      const refreshThenClose = () =>
-                        loadThread().then(() => setReplyToEmail(null));
-                      setTimeout(refreshThenClose, 400);
-                    } else {
-                      setReplyToEmail(null);
-                    }
-                  }}
-                />
-              </div>
-            )}
-
-            {previewEmail && !replyToEmail && (
-              <div style={{ flex: 1, minHeight: 0, overflow: "auto", scrollbarGutter: "stable" }}>
-                <RightPanel
-                  previewEmail={previewEmail}
-                  threadEmails={threadEmails}
-                  expandedById={expandedById}
-                  showHistoryById={showHistoryById}
-                  toggleExpanded={toggleExpanded}
-                  toggleHistory={toggleHistory}
-                  loadThread={loadThread}
-                  loadingThread={loadingThread}
-                  onReply={setReplyToEmail}
-                  mailboxId={selectedMailboxId}
-                  mailboxEmail={selectedMailbox?.mailbox_email}
-                  authToken={authToken}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {notification && (
-        <div
-          role="status"
-          aria-live="polite"
-          style={{
-            position: "fixed",
-            bottom: 24,
-            left: "50%",
-            transform: "translateX(-50%)",
-            padding: "12px 20px",
-            borderRadius: 12,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.08)",
-            background: notification.type === "error" ? "rgba(220,53,69,0.95)" : "rgba(0,0,0,0.88)",
-            color: "#fff",
-            fontSize: 14,
-            fontWeight: 500,
-            zIndex: 10000,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-        >
-          <span className="material-icons-outlined" style={{ fontSize: 20 }}>
-            {notification.type === "error" ? "error_outline" : "check_circle"}
-          </span>
-          {notification.message}
-        </div>
-      )}
-    </div>
+      selectedFolderPath={selectedFolderPath}
+      hoveredFolderPath={hoveredFolderPath}
+      setHoveredFolderPath={setHoveredFolderPath}
+      expandedFolders={expandedFolders}
+      setExpandedFolders={setExpandedFolders}
+      folderCounts={folderCounts}
+      markAllAsUnread={markAllAsUnread}
+      markAllAsRead={markAllAsRead}
+      setSelectedFolderPath={setSelectedFolderPath}
+      selectedLabel={selectedLabel}
+      setSelectedLabel={setSelectedLabel}
+      clearEmailState={clearEmailState}
+      threadCacheRef={threadCacheRef}
+      emails={emails}
+      hasMoreEmails={hasMoreEmails}
+      hasMoreEmailsRef={hasMoreEmailsRef}
+      loadingMore={loadingMore}
+      loadingMoreRef={loadingMoreRef}
+      selectedEmailId={selectedEmailId}
+      hoveredId={hoveredId}
+      setHoveredId={setHoveredId}
+      handleSelectEmail={handleSelectEmail}
+      selectedMailboxId={selectedMailboxId}
+      handleEmailAction={handleEmailAction}
+      loadEmails={loadEmails}
+      previewEmail={previewEmail}
+      replyToEmail={replyToEmail}
+      setReplyToEmail={setReplyToEmail}
+      threadEmails={threadEmails}
+      expandedById={expandedById}
+      showHistoryById={showHistoryById}
+      toggleExpanded={toggleExpanded}
+      toggleHistory={toggleHistory}
+      loadThread={loadThread}
+      loadingThread={loadingThread}
+      notification={notification}
+      authToken={authToken}
+    />
   );
 }
 

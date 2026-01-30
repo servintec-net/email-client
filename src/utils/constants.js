@@ -1,4 +1,36 @@
 export const API_BASE = "http://localhost:4000";
+
+/** Layout persistence keys and pane limits */
+export const LAYOUT_KEYS = {
+  PANE_WIDTHS: "emailLayoutPaneWidths",
+  MAILBOX_ORDER: "emailLayoutMailboxOrder",
+  SELECTED_EMAIL: "emailLayoutSelectedEmail",
+};
+
+export const PANE_LIMITS = {
+  FOLDER_MIN: 200,
+  FOLDER_MAX: 420,
+  FOLDER_DEFAULT: 260,
+  LIST_MIN: 280,
+  LIST_MAX: 600,
+  LIST_DEFAULT: 380,
+};
+
+/** Folder paths that act as toggle-only (expand/collapse) not direct selection */
+export const TOGGLE_ONLY_PATHS = new Set([
+  "Inbox > Applications",
+  "Inbox > Interviews",
+  "Inbox > Interviews > Interview Request",
+  "Inbox > Offer",
+]);
+
+export const EXPANDED_FOLDERS_DEFAULT = new Set([
+  "Inbox",
+  "Inbox > Applications",
+  "Inbox > Interviews",
+  "Inbox > Interviews > Interview Request",
+  "Inbox > Offer",
+]);
 export const WS_BASE = (() => {
     try {
         const u = new URL(API_BASE);
@@ -7,12 +39,6 @@ export const WS_BASE = (() => {
         return "ws://localhost:4000";
     }
 })();
-
-export const AVATAR_COLORS = [
-    "#FF5722", "#3F51B5", "#009688",
-    "#9C27B0", "#2196F3", "#FF9800",
-    "#4CAF50", "#E91E63", "#795548"
-];
 
 export const FOLDER_TREE = {
     "Inbox": {
