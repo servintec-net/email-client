@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { HelmetProvider } from 'react-v19-helmet-async';
 import './index.css';
+import './website/styles/globals.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
@@ -34,9 +36,11 @@ if (!rootEl) {
 } else {
   const root = ReactDOM.createRoot(rootEl);
   root.render(
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    </HelmetProvider>
   );
   reportWebVitals();
 }
