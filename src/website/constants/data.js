@@ -3,7 +3,7 @@ import {
   Code2,
   Smartphone,
   Megaphone,
-  Heart,
+  Mail,
   Video,
   Lock,
 } from "lucide-react"
@@ -27,21 +27,22 @@ export const products = [
         FreeWall VPN provides robust security and privacy protection, ensuring your internet traffic is encrypted and your data remains protected while maintaining lawful and responsible usage.`,
   },
   {
-    name: "Inspire",
-    description: "A health-focused social network connecting patients and caregivers through support communities.",
-    category: "Healthcare",
-    icon: React.createElement(Heart, { className: "w-6 h-6 text-red-400 mb-4" }),
-    detailedDescription: `Inspire is a health-focused social network connecting patients and caregivers through support communities.
+    name: "AI Email Categorizer",
+    description: "An AI-powered email management tool designed for job seekers to organize and track their job search communications.",
+    category: "Productivity",
+    icon: React.createElement(Mail, { className: "w-6 h-6 text-blue-400 mb-4" }),
+    detailedDescription: `AI Email Categorizer is an AI-powered email management tool designed specifically for job seekers to organize and track their job search communications.
         <br/><br/>
         <strong>Key Features:</strong>
         <ul class="list-disc pl-5 space-y-2 mt-3 mb-4">
-          <li>Support communities for patients and caregivers</li>
-          <li>Health-focused social networking</li>
-          <li>Peer support and shared experiences</li>
-          <li>Resource sharing and information exchange</li>
-          <li>Privacy-focused community engagement</li>
+          <li>Automatic categorization of job application, interview, and recruiter emails</li>
+          <li>Smart labeling for offers, rejections, follow-ups, and required documents</li>
+          <li>Thread grouping by company and role</li>
+          <li>Priority detection for interview and time-sensitive messages</li>
+          <li>AI-powered drafting of professional replies and follow-up emails</li>
+          <li>Custom AI rules tailored for job search workflows</li>
         </ul>
-        Inspire creates meaningful connections between patients and caregivers, fostering support communities that help individuals navigate their health journeys together.`,
+        AI Email Categorizer streamlines the job search process by turning a busy inbox into a structured job pipeline, helping candidates stay organized, respond faster, and never miss important opportunities.`,
   },
   {
     name: "Dumbstruck",
