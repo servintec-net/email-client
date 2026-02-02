@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { HelmetProvider } from 'react-v19-helmet-async';
 import './index.css';
-import './website/styles/globals.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 

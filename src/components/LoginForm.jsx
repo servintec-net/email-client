@@ -201,6 +201,16 @@ const LoginForm = ({ onLogin }) => {
         }
       `}</style>
       <style>{`
+        /* Auth inputs: same as Get in Touch - white text on dark glass; placeholder visible */
+        .auth-form-input::placeholder {
+          color: rgba(156, 163, 175, 0.9);
+        }
+        .auth-form-input:-webkit-autofill,
+        .auth-form-input:-webkit-autofill:hover,
+        .auth-form-input:-webkit-autofill:focus {
+          -webkit-text-fill-color: #f3f4f6;
+          -webkit-box-shadow: 0 0 0 1000px rgba(0, 0, 0, 0.2) inset;
+        }
         @keyframes slideIn {
           from {
             opacity: 0;
@@ -224,268 +234,116 @@ const LoginForm = ({ onLogin }) => {
 
 
       <div
-        style={{
-          background: "rgba(255, 255, 255, 0.98)",
-          backdropFilter: "blur(30px) saturate(180%)",
-          WebkitBackdropFilter: "blur(30px) saturate(180%)",
-          borderRadius: 24,
-          padding: "48px 40px",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6) inset",
-          minWidth: 420,
-          maxWidth: 460,
-          width: "90%",
-          animation: "slideIn 0.4s ease-out",
-          position: "relative",
-          zIndex: 1,
-          border: "1px solid rgba(255, 255, 255, 0.3)",
-        }}
+        className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl p-6 md:p-8 w-[90%] min-w-[320px] max-w-[460px] relative z-10"
+        style={{ animation: "slideIn 0.4s ease-out" }}
       >
-        {/* Logo and Header */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            marginBottom: 32,
-          }}
-        >
+        {/* Logo and Header - same style as Get in Touch CardHeader */}
+        <div className="flex flex-col items-center mb-8">
           <img
             src="/servintec-logo.png"
             alt="Servintec"
-            style={{
-              height: 60,
-              width: "auto",
-              objectFit: "contain",
-              marginBottom: 16,
-            }}
+            className="h-14 w-auto object-contain mb-4"
             onError={(e) => {
               e.target.style.display = "none";
             }}
           />
-          <h1
-            style={{
-              margin: 0,
-              fontSize: 28,
-              fontWeight: 700,
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              letterSpacing: "-0.5px",
-            }}
-          >
+          <h1 className="text-white text-3xl font-semibold font-heading m-0 text-center">
             {isSignup ? "Create Account" : "Welcome Back"}
           </h1>
-          <p
-            style={{
-              margin: "8px 0 0 0",
-              color: "rgba(0, 0, 0, 0.5)",
-              fontSize: 14,
-              fontWeight: 500,
-            }}
-          >
+          <p className="text-gray-400 text-lg mt-2 text-center">
             {isSignup
               ? "Sign up to get started with Email Classifier"
               : "Sign in to continue to Email Classifier"}
           </p>
         </div>
 
-        {/* Error Message */}
+        {/* Error Message - same as Get in Touch status (red variant) */}
         {error && (
-          <div
-            style={{
-              padding: "14px 16px",
-              marginBottom: 20,
-              background: "linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%)",
-              border: "1px solid rgba(239, 68, 68, 0.3)",
-              borderRadius: 12,
-              color: "#dc2626",
-              fontSize: 13,
-              fontWeight: 500,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              animation: "shake 0.5s ease",
-            }}
-          >
-            <span className="material-icons-outlined" style={{ fontSize: 20, flexShrink: 0 }}>
-              error_outline
-            </span>
+          <div className="p-3 rounded-md bg-red-500/20 text-red-200 flex items-center gap-2 mb-6" style={{ animation: "shake 0.5s ease" }}>
+            <span className="material-icons-outlined text-xl flex-shrink-0">error_outline</span>
             <span>{error}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           {isSignup && (
-            <div style={{ marginBottom: 20 }}>
-              <label
-                style={{
-                  display: "block",
-                  marginBottom: 8,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "rgba(0, 0, 0, 0.8)",
-                }}
-              >
+            <div className="space-y-4">
+              <label htmlFor="auth-username" className="block text-gray-300 text-lg font-medium">
                 Username
               </label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  onFocus={() => setFocusedField("username")}
-                  onBlur={() => setFocusedField(null)}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "14px 16px",
-                    border: `2px solid ${
-                      focusedField === "username"
-                        ? "rgba(102, 126, 234, 0.5)"
-                        : "rgba(0, 0, 0, 0.1)"
-                    }`,
-                    borderRadius: 12,
-                    fontSize: 15,
-                    fontWeight: 500,
-                    boxSizing: "border-box",
-                    background: focusedField === "username" ? "rgba(102, 126, 234, 0.02)" : "#fff",
-                    transition: "all 0.2s ease",
-                    outline: "none",
-                  }}
-                  placeholder="Choose a username"
-                />
-              </div>
+              <input
+                id="auth-username"
+                type="text"
+                className="auth-form-input w-full px-4 py-3 rounded-md bg-black/20 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                onFocus={() => setFocusedField("username")}
+                onBlur={() => setFocusedField(null)}
+                required
+                placeholder="Choose a username"
+              />
             </div>
           )}
 
-          <div style={{ marginBottom: 20 }}>
-            <label
-              style={{
-                display: "block",
-                marginBottom: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                color: "rgba(0, 0, 0, 0.8)",
-              }}
-            >
+          <div className="space-y-4">
+            <label htmlFor="auth-email" className="block text-gray-300 text-lg font-medium">
               {isSignup ? "Email" : "Email or Username"}
             </label>
-            <div style={{ position: "relative" }}>
+            <div className="relative">
               <span
-                className="material-icons-outlined"
-                style={{
-                  position: "absolute",
-                  left: 16,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: 20,
-                  color: focusedField === "email" ? "#667eea" : "rgba(0, 0, 0, 0.4)",
-                  pointerEvents: "none",
-                  transition: "color 0.2s ease",
-                }}
+                className={`material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none transition-colors ${
+                  focusedField === "email" ? "text-blue-400" : "text-gray-400"
+                }`}
               >
                 {isSignup ? "email" : "person"}
               </span>
               <input
+                id="auth-email"
                 type={isSignup ? "email" : "text"}
+                className="auth-form-input w-full pl-12 pr-4 py-3 rounded-md bg-black/20 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 onFocus={() => setFocusedField("email")}
                 onBlur={() => setFocusedField(null)}
                 required
-                style={{
-                  width: "100%",
-                  padding: "14px 16px 14px 48px",
-                  border: `2px solid ${
-                    focusedField === "email" ? "rgba(102, 126, 234, 0.5)" : "rgba(0, 0, 0, 0.1)"
-                  }`,
-                  borderRadius: 12,
-                  fontSize: 15,
-                  fontWeight: 500,
-                  boxSizing: "border-box",
-                  background: focusedField === "email" ? "rgba(102, 126, 234, 0.02)" : "#fff",
-                  transition: "all 0.2s ease",
-                  outline: "none",
-                }}
                 placeholder={isSignup ? "your@email.com" : "email or username"}
               />
             </div>
           </div>
 
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: "rgba(0, 0, 0, 0.8)",
-                }}
-              >
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <label htmlFor="auth-password" className="block text-gray-300 text-lg font-medium">
                 Password
               </label>
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "rgba(0, 0, 0, 0.5)",
-                  cursor: "pointer",
-                  padding: 4,
-                  display: "flex",
-                  alignItems: "center",
-                  fontSize: 12,
-                  fontWeight: 500,
-                  transition: "color 0.2s ease",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#667eea")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(0, 0, 0, 0.5)")}
+                className="bg-transparent border-none text-gray-400 hover:text-blue-400 cursor-pointer py-1 flex items-center text-sm font-medium transition-colors"
               >
-                <span className="material-icons-outlined" style={{ fontSize: 18, marginRight: 4 }}>
+                <span className="material-icons-outlined text-lg mr-1">
                   {showPassword ? "visibility_off" : "visibility"}
                 </span>
                 {showPassword ? "Hide" : "Show"}
               </button>
             </div>
-            <div style={{ position: "relative" }}>
+            <div className="relative">
               <span
-                className="material-icons-outlined"
-                style={{
-                  position: "absolute",
-                  left: 16,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: 20,
-                  color: focusedField === "password" ? "#667eea" : "rgba(0, 0, 0, 0.4)",
-                  pointerEvents: "none",
-                  transition: "color 0.2s ease",
-                }}
+                className={`material-icons-outlined absolute left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none transition-colors ${
+                  focusedField === "password" ? "text-blue-400" : "text-gray-400"
+                }`}
               >
                 lock
               </span>
               <input
+                id="auth-password"
                 type={showPassword ? "text" : "password"}
+                className="auth-form-input w-full pl-12 pr-4 py-3 rounded-md bg-black/20 text-white border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 onFocus={() => setFocusedField("password")}
                 onBlur={() => setFocusedField(null)}
                 required
-                style={{
-                  width: "100%",
-                  padding: "14px 16px 14px 48px",
-                  border: `2px solid ${
-                    focusedField === "password" ? "rgba(102, 126, 234, 0.5)" : "rgba(0, 0, 0, 0.1)"
-                  }`,
-                  borderRadius: 12,
-                  fontSize: 15,
-                  fontWeight: 500,
-                  boxSizing: "border-box",
-                  background: focusedField === "password" ? "rgba(102, 126, 234, 0.02)" : "#fff",
-                  transition: "all 0.2s ease",
-                  outline: "none",
-                }}
                 placeholder="Enter your password"
               />
             </div>
@@ -494,73 +352,17 @@ const LoginForm = ({ onLogin }) => {
           <button
             type="submit"
             disabled={loading}
-            style={{
-              width: "100%",
-              padding: "16px",
-              background: loading
-                ? "rgba(102, 126, 234, 0.6)"
-                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 12,
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: loading ? "default" : "pointer",
-              marginBottom: 20,
-              boxShadow: loading
-                ? "none"
-                : "0 8px 24px rgba(102, 126, 234, 0.4), 0 0 0 0 rgba(102, 126, 234, 0.5)",
-              transition: "all 0.3s ease",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              position: "relative",
-              overflow: "hidden",
-            }}
-            onMouseEnter={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 12px 32px rgba(102, 126, 234, 0.5), 0 0 0 4px rgba(102, 126, 234, 0.2)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!loading) {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 8px 24px rgba(102, 126, 234, 0.4), 0 0 0 0 rgba(102, 126, 234, 0.5)";
-              }
-            }}
-            onMouseDown={(e) => {
-              if (!loading) e.currentTarget.style.transform = "translateY(0)";
-            }}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl text-lg py-3 rounded-full font-semibold disabled:opacity-70 disabled:cursor-default flex items-center justify-center gap-2"
           >
             {loading && (
-              <span
-                className="material-icons-outlined"
-                style={{
-                  fontSize: 20,
-                  animation: "spin 1s linear infinite",
-                }}
-              >
-                refresh
-              </span>
+              <span className="material-icons-outlined text-xl animate-spin">refresh</span>
             )}
             <span>{loading ? "Processing..." : isSignup ? "Create Account" : "Sign In"}</span>
           </button>
         </form>
 
-        <div
-          style={{
-            textAlign: "center",
-            fontSize: 14,
-            color: "rgba(0, 0, 0, 0.6)",
-            paddingTop: 20,
-            borderTop: "1px solid rgba(0, 0, 0, 0.08)",
-          }}
-        >
-          <span style={{ marginRight: 4 }}>
-            {isSignup ? "Already have an account?" : "Don't have an account?"}
-          </span>
+        <div className="text-center text-gray-400 pt-5 mt-5 border-t border-white/10">
+          <span className="mr-1">{isSignup ? "Already have an account?" : "Don't have an account?"}</span>
           <button
             type="button"
             onClick={() => {
@@ -568,24 +370,7 @@ const LoginForm = ({ onLogin }) => {
               setError("");
               setPassword("");
             }}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#667eea",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: 14,
-              padding: 4,
-              transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.textDecoration = "underline";
-              e.currentTarget.style.color = "#764ba2";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.textDecoration = "none";
-              e.currentTarget.style.color = "#667eea";
-            }}
+            className="bg-transparent border-none text-blue-400 hover:text-purple-400 cursor-pointer font-semibold text-base py-1 transition-colors underline-offset-2 hover:underline"
           >
             {isSignup ? "Sign In" : "Sign Up"}
           </button>
