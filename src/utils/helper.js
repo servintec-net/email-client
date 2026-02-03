@@ -253,3 +253,39 @@ export function flattenFolderTree(tree, prefix = "") {
     }
     return out;
 }
+
+/** Navigate to the node at path (e.g. "Inbox > Applications"). Returns the subtree node or undefined. */
+function getNodeAtPath(tree, pathString) {
+    if (!pathString || !tree) return undefined;
+    const parts = String(pathString).split(" > ").map((p) => p.trim()).filter(Boolean);
+    let node = tree;
+    for (const part of parts) {
+        node = node?.[part];
+        if (node === undefined) return undefined;
+    }
+    return node;
+}
+
+/** Collect all leaf paths under a node (paths where child is null). */
+function getLeavesUnderNode(node, prefix) {
+    if (!node || typeof node !== "object") return prefix ? [prefix] : [];
+    const out = [];
+    for (const [name, child] of Object.entries(node)) {
+        const path = prefix ? `${prefix} > ${name}` : name;
+        if (child === null || (typeof child === "object" && Object.keys(child).length === 0)) {
+            out.push(path);
+        } else {
+            out.push(...getLeavesUnderNode(child, path));
+        }
+    }
+    return out;
+}
+
+/** Given tree (e.g. FOLDER_TREE) and a path (e.g. "Inbox > Applications"), return all leaf folder paths under it. If path is itself a leaf, returns [path]. */
+export function getLeafPathsUnder(tree, pathString) {
+    const node = getNodeAtPath(tree, pathString);
+    if (node === undefined) return [];
+    const hasChildren = node && typeof node === "object" && Object.keys(node).length > 0;
+    if (!hasChildren) return [pathString];
+    return getLeavesUnderNode(node, pathString);
+}

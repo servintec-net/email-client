@@ -19,16 +19,8 @@ const FolderTreeView = React.memo(function FolderTreeView({
   const baseIndent = 10;
   const indentStep = 8;
 
-  const TOGGLE_ONLY = useMemo(
-    () =>
-      new Set([
-        "Inbox > Applications",
-        "Inbox > Interviews",
-        "Inbox > Interviews > Interview Request",
-        "Inbox > Offer",
-      ]),
-    []
-  );
+  /** Empty: all folders are selectable and fetch emails when clicked (no toggle-only behavior) */
+  const TOGGLE_ONLY = useMemo(() => new Set([]), []);
 
   const hasChildren = (node) =>
     !!node && typeof node === "object" && Object.keys(node).length > 0;
@@ -152,21 +144,27 @@ const FolderTreeView = React.memo(function FolderTreeView({
             : "transparent";
 
         const isToggleOnly = hasKids && TOGGLE_ONLY.has(path);
+        const isInbox = path === "Inbox";
 
-        // For TOGGLE_ONLY folders, sum from children, but also check direct count if available
-        const unread = isToggleOnly
-          ? Math.max(
-              sumUnreadInSubtree(child, path),
-              Number(folderCounts?.[path]?.unread ?? 0)
-            )
-          : Number(folderCounts?.[path]?.unread ?? 0);
-        
-        const total = isToggleOnly
-          ? Math.max(
-              sumTotalInSubtree(child, path),
-              Number(folderCounts?.[path]?.total ?? 0)
-            )
-          : Number(folderCounts?.[path]?.total ?? 0);
+        // Inbox: show only its direct count (normal folder). Others with children: show sum of subfolder counts.
+        const unread =
+          isInbox
+            ? Number(folderCounts?.[path]?.unread ?? 0)
+            : hasKids
+              ? Math.max(
+                  sumUnreadInSubtree(child, path),
+                  Number(folderCounts?.[path]?.unread ?? 0)
+                )
+              : Number(folderCounts?.[path]?.unread ?? 0);
+        const total =
+          isInbox
+            ? Number(folderCounts?.[path]?.total ?? 0)
+            : hasKids
+              ? Math.max(
+                  sumTotalInSubtree(child, path),
+                  Number(folderCounts?.[path]?.total ?? 0)
+                )
+              : Number(folderCounts?.[path]?.total ?? 0);
 
         // Get color based on path pattern, then apply only if there are unread emails
         const pathColor = getUnreadColor(path);
@@ -325,21 +323,23 @@ const FolderTreeView = React.memo(function FolderTreeView({
       {menu && (
         (() => {
           const hasKids = hasChildren(menu.node);
-          const isToggleOnly = hasKids && TOGGLE_ONLY.has(menu.path);
-
-          const unread = isToggleOnly
-            ? Math.max(
-                sumUnreadInSubtree(menu.node, menu.path),
-                Number(folderCounts?.[menu.path]?.unread ?? 0)
-              )
-            : Number(folderCounts?.[menu.path]?.unread ?? 0);
-
-          const total = isToggleOnly
-            ? Math.max(
-                sumTotalInSubtree(menu.node, menu.path),
-                Number(folderCounts?.[menu.path]?.total ?? 0)
-              )
-            : Number(folderCounts?.[menu.path]?.total ?? 0);
+          const isInbox = menu.path === "Inbox";
+          const unread = isInbox
+            ? Number(folderCounts?.[menu.path]?.unread ?? 0)
+            : hasKids
+              ? Math.max(
+                  sumUnreadInSubtree(menu.node, menu.path),
+                  Number(folderCounts?.[menu.path]?.unread ?? 0)
+                )
+              : Number(folderCounts?.[menu.path]?.unread ?? 0);
+          const total = isInbox
+            ? Number(folderCounts?.[menu.path]?.total ?? 0)
+            : hasKids
+              ? Math.max(
+                  sumTotalInSubtree(menu.node, menu.path),
+                  Number(folderCounts?.[menu.path]?.total ?? 0)
+                )
+              : Number(folderCounts?.[menu.path]?.total ?? 0);
 
           const disableRead = total <= 0 || unread <= 0; // nothing unread to mark read
           const disableUnread = total <= 0 || (unread >= total); // already all unread

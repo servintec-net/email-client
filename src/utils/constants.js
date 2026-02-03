@@ -17,13 +17,8 @@ export const PANE_LIMITS = {
   LIST_DEFAULT: 380,
 };
 
-/** Folder paths that act as toggle-only (expand/collapse) not direct selection */
-export const TOGGLE_ONLY_PATHS = new Set([
-  "Inbox > Applications",
-  "Inbox > Interviews",
-  "Inbox > Interviews > Interview Request",
-  "Inbox > Offer",
-]);
+/** Folder paths that act as toggle-only (expand/collapse) not direct selection — empty so all folders are selectable and fetch emails */
+export const TOGGLE_ONLY_PATHS = new Set([]);
 
 export const EXPANDED_FOLDERS_DEFAULT = new Set([
   "Inbox",

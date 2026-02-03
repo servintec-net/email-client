@@ -1,6 +1,6 @@
 // App.js
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { flattenFolderTree, getMailboxDisplayLabel } from "./utils/helper";
+import { flattenFolderTree, getMailboxDisplayLabel, getLeafPathsUnder } from "./utils/helper";
 import {
   FOLDER_TREE,
   API_BASE,
@@ -408,9 +408,25 @@ function EmailApp() {
     if (!authToken || !selectedMailboxId) return;
 
     const isLabelsMode = leftPaneTab === "labels" && selectedLabel;
+    const isInbox = selectedFolderPath === "Inbox";
+    const aggregateSubfoldersPaths = ["Inbox > Applications", "Inbox > Interviews", "Inbox > Interviews > Interview Request"];
+    const shouldAggregateSubfolders = !isInbox && aggregateSubfoldersPaths.includes(selectedFolderPath);
+    const folderPaths = shouldAggregateSubfolders ? getLeafPathsUnder(FOLDER_TREE, selectedFolderPath) : [];
+    const pathsToRequest =
+      isInbox
+        ? [selectedFolderPath]
+        : shouldAggregateSubfolders && folderPaths.length > 1
+          ? [selectedFolderPath, ...folderPaths]
+          : shouldAggregateSubfolders && folderPaths.length > 0
+            ? folderPaths
+            : [selectedFolderPath];
+    const folderParam =
+      pathsToRequest.length > 1
+        ? pathsToRequest.map((p) => `folderPath=${encodeURIComponent(p)}`).join("&")
+        : `folderPath=${encodeURIComponent(pathsToRequest[0] || selectedFolderPath)}`;
     const urlParams = isLabelsMode
       ? `mailboxId=${selectedMailboxId}&category=${encodeURIComponent(selectedLabel)}&top=50&skip=${append ? emailSkip : 0}`
-      : `mailboxId=${selectedMailboxId}&folderPath=${encodeURIComponent(selectedFolderPath)}&top=50&skip=${append ? emailSkip : 0}`;
+      : `mailboxId=${selectedMailboxId}&${folderParam}&top=50&skip=${append ? emailSkip : 0}`;
 
     // Reset pagination when loading a new folder/label (not appending)
     if (!append) {
@@ -474,9 +490,13 @@ function EmailApp() {
       setLoadingMore(true);
       loadingMoreRef.current = true;
       try {
+        const appendFolderParam =
+          pathsToRequest.length > 1
+            ? pathsToRequest.map((p) => `folderPath=${encodeURIComponent(p)}`).join("&")
+            : `folderPath=${encodeURIComponent(pathsToRequest[0] || selectedFolderPath)}`;
         const appendParams = isLabelsMode
           ? `mailboxId=${selectedMailboxId}&category=${encodeURIComponent(selectedLabel)}&top=50&skip=${emailSkip}`
-          : `mailboxId=${selectedMailboxId}&folderPath=${encodeURIComponent(selectedFolderPath)}&top=50&skip=${emailSkip}`;
+          : `mailboxId=${selectedMailboxId}&${appendFolderParam}&top=50&skip=${emailSkip}`;
         const res = await fetch(
           `${API_BASE}/emails?${appendParams}`,
           {
