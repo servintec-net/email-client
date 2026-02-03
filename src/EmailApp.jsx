@@ -88,6 +88,12 @@ function EmailApp() {
   }, [folderPaneWidth, listPaneWidth]);
 
   useEffect(() => {
+    if (selectedMailboxId != null) {
+      setJson(LAYOUT_KEYS.SELECTED_MAILBOX_ID, selectedMailboxId);
+    }
+  }, [selectedMailboxId]);
+
+  useEffect(() => {
     if (mailboxes.length === 0) return;
     setMailboxOrderIds((prev) => {
       const validIds = prev.filter((id) => mailboxes.some((mb) => mb.id === id));
@@ -159,7 +165,11 @@ function EmailApp() {
           setMailboxesNextOffset(data.nextOffset ?? null);
           const connectedMailboxes = list.filter((mb) => mb.is_connected);
           if (connectedMailboxes.length > 0) {
-            setSelectedMailboxId(connectedMailboxes[0].id);
+            const savedId = getJson(LAYOUT_KEYS.SELECTED_MAILBOX_ID, null);
+            const idToSelect = savedId && connectedMailboxes.some((mb) => mb.id === savedId)
+              ? savedId
+              : connectedMailboxes[0].id;
+            setSelectedMailboxId(idToSelect);
           }
           // Fetch remaining pages in background if any
           if (data.hasMore && data.nextOffset != null) {
@@ -251,7 +261,11 @@ function EmailApp() {
         setMailboxesNextOffset(data.nextOffset ?? null);
         const connectedMailboxes = list.filter((mb) => mb.is_connected);
         if (connectedMailboxes.length > 0 && !selectedMailboxId) {
-          setSelectedMailboxId(connectedMailboxes[0].id);
+          const savedId = getJson(LAYOUT_KEYS.SELECTED_MAILBOX_ID, null);
+          const idToSelect = savedId && connectedMailboxes.some((mb) => mb.id === savedId)
+            ? savedId
+            : connectedMailboxes[0].id;
+          setSelectedMailboxId(idToSelect);
         }
         if (data.hasMore && data.nextOffset != null) {
           setTimeout(() => loadMailboxesRef.current({ append: true }), 100);
@@ -1033,6 +1047,7 @@ function EmailApp() {
     setCurrentUser(null);
     setMailboxes([]);
     setSelectedMailboxId(null);
+    setJson(LAYOUT_KEYS.SELECTED_MAILBOX_ID, null);
   }, []);
 
   if (loadingAuth) return <LoadingScreen />;

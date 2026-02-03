@@ -5,6 +5,7 @@ export const LAYOUT_KEYS = {
   PANE_WIDTHS: "emailLayoutPaneWidths",
   MAILBOX_ORDER: "emailLayoutMailboxOrder",
   SELECTED_EMAIL: "emailLayoutSelectedEmail",
+  SELECTED_MAILBOX_ID: "emailLayoutSelectedMailboxId",
 };
 
 export const PANE_LIMITS = {
