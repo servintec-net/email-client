@@ -53,19 +53,19 @@ export default function HomePage() {
         <meta property="og:description" content="Leading software development company in the USA offering innovative solutions in web development, mobile apps, and AI services." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://servintec.net" />
-        <meta property="og:image" content="https://servintec.net/logo.svg" />
+        <meta property="og:image" content="https://servintec.net/servintec-logo.png" />
         <meta property="og:site_name" content="Servintec" />
         <meta property="og:locale" content="en_US" />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Servintec - Crafting Digital Excellence" />
         <meta name="twitter:description" content="Leading software development company in the USA offering innovative solutions in web development, mobile apps, and AI services." />
-        <meta name="twitter:image" content="https://servintec.net/logo.svg" />
+        <meta name="twitter:image" content="https://servintec.net/servintec-logo.png" />
         <meta name="geo.region" content="NP-P1" />
         <meta name="geo.placename" content="USA" />
         <meta name="geo.position" content="26.6418;87.9927" />
         <meta name="ICBM" content="26.6418, 87.9927" />
         <link rel="canonical" href="https://servintec.net" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
       </Helmet>
 
       <motion.div

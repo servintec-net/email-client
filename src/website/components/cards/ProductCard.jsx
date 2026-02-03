@@ -62,12 +62,22 @@ const ProductCard = ({ product }) => {
 
         <p className="text-gray-300 mb-5 flex-grow">{product.description}</p>
 
-        <Button
-          className="mt-auto bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 px-5 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all"
-          onClick={() => setIsModalOpen(true)}
-        >
-          View Details <ArrowRight className="ml-2 w-4 h-4" />
-        </Button>
+        {product.name === "AI Email Categorizer" ? (
+          <Link to="/email" className="mt-auto block">
+            <Button
+              className="w-full bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 px-5 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all"
+            >
+              Start Organizing Emails <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </Link>
+        ) : (
+          <Button
+            className="mt-auto bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 hover:text-blue-300 px-5 py-2 rounded-full font-medium shadow-md hover:shadow-lg transition-all"
+            onClick={() => setIsModalOpen(true)}
+          >
+            View Details <ArrowRight className="ml-2 w-4 h-4" />
+          </Button>
+        )}
       </motion.div>
 
       <Modal

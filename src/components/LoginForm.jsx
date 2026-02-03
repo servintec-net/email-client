@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { API_BASE } from "../utils/constants";
 import { setAuthToken } from "../utils/auth";
 
@@ -237,6 +238,15 @@ const LoginForm = ({ onLogin }) => {
         className="bg-white/5 backdrop-blur-md border border-white/10 shadow-lg rounded-2xl p-6 md:p-8 w-[90%] min-w-[320px] max-w-[460px] relative z-10"
         style={{ animation: "slideIn 0.4s ease-out" }}
       >
+        {/* Back to Servintec */}
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm font-medium mb-6 transition-colors"
+        >
+          <span className="material-icons-outlined text-lg">arrow_back</span>
+          Back to Servintec
+        </Link>
+
         {/* Logo and Header - same style as Get in Touch CardHeader */}
         <div className="flex flex-col items-center mb-8">
           <img

@@ -99,7 +99,7 @@ const MobileMenu = ({
 
             <div className="flex justify-center mb-8 mt-2">
               <img
-                src="/logo.svg"
+                src="/servintec-logo.png"
                 alt="Servintec Logo"
                 className="h-12 w-auto"
               />
@@ -244,7 +244,7 @@ const Navbar = () => {
             >
               <div className="flex items-center">
                 <img
-                  src="/logo.svg"
+                  src="/servintec-logo.png"
                   alt="Servintec Logo"
                   className="h-8 w-auto"
                 />
@@ -278,7 +278,7 @@ const Navbar = () => {
                 <div className="relative">
                   <div className="absolute -inset-2 bg-gradient-to-r from-blue-400/10 to-purple-500/10 rounded-full blur-md"></div>
                   <img
-                    src="/logo.svg"
+                    src="/servintec-logo.png"
                     alt="Servintec Logo"
                     className="h-8 w-auto hidden sm:inline-block relative z-10"
                   />

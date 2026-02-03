@@ -79,7 +79,7 @@ const Footer = () => {
                 }}
               >
                 <img
-                  src="/logo.svg"
+                  src="/servintec-logo.png"
                   alt="Servintec Logo"
                   className="h-12 w-auto"
                 />

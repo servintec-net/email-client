@@ -28,7 +28,7 @@ const HeroSection = () => {
   return (
     <header
       id="home"
-      className="container mx-auto px-6 lg:px-8 pt-32 pb-32 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden min-h-[90vh]"
+      className="container mx-auto px-6 lg:px-8 pt-24 pb-20 flex flex-col items-center gap-8 relative overflow-hidden min-h-[70vh]"
     >
       <motion.div
         className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl"
@@ -133,12 +133,12 @@ const HeroSection = () => {
         }}
       />
 
-      <div className="flex-1 max-w-2xl relative z-10 text-left mx-4 md:mx-8 mt-8">
+      <div className="w-full max-w-4xl relative z-10 text-center mx-4 mt-6">
         <motion.h1
           initial={{ opacity: 0, y: 30, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-5xl sm:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-8 drop-shadow-lg font-heading relative"
+          className="text-5xl sm:text-6xl md:text-6xl lg:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-4 drop-shadow-lg font-heading relative leading-tight whitespace-nowrap"
         >
           <motion.span
             animate={{
@@ -154,14 +154,14 @@ const HeroSection = () => {
             }}
             className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400"
           >
-            Build Better,<br /><span className="whitespace-nowrap">Faster, Smarter</span>
+            Build Better, Faster, Smarter
           </motion.span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-          className="text-xl text-gray-300 mb-12 leading-relaxed relative"
+          className="text-lg text-gray-300 mb-6 leading-relaxed relative"
         >
           <motion.span
             animate={{
@@ -180,7 +180,7 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
-          className="flex flex-wrap gap-4"
+          className="flex flex-wrap justify-center gap-3"
         >
           <motion.div
             whileHover={{ scale: 1.05, y: -2 }}
@@ -189,7 +189,7 @@ const HeroSection = () => {
             <Link to="/contact">
               <Button
                 size="lg"
-                className="bg-gradient-to-r from-blue-500 to-purple-500 border-none text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300 text-xl px-10 py-6 rounded-full font-semibold"
+                className="bg-gradient-to-r from-blue-500 to-purple-500 border-none text-white hover:from-blue-600 hover:to-purple-600 transition-all duration-300 text-base px-8 py-4 rounded-full font-semibold"
               >
                 <span className="flex items-center gap-2">
                   Contact Us
@@ -206,21 +206,41 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      <div className="flex-1 w-full md:w-1/2 relative mx-4 md:mx-8 z-10">
+      <div className="w-full max-w-7xl relative mx-4 z-10 flex flex-row items-center justify-center gap-8 sm:gap-12">
         <motion.div
-          initial={{ opacity: 0, x: 50, scale: 0.9 }}
+          initial={{ opacity: 0, x: 30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-          className="relative w-full h-[400px] md:h-[500px] lg:h-[600px]"
+          className="relative w-full max-w-[460px] sm:max-w-xl h-[320px] sm:h-[420px] flex-shrink-0"
         >
-          <div className="rounded-2xl relative z-10 w-full h-full">
+          <div className="rounded-2xl relative z-10 w-full h-full overflow-hidden bg-white/5 border border-white/10">
             <ImageCarousel
               images={["/images/hero1.png"]}
               autoPlay={true}
               interval={4000}
               className="w-full h-full"
             />
+            <span className="absolute top-2 right-3 z-20 px-4 py-1 rounded-full text-[12px] font-medium tracking-widest text-white/95 bg-white/10 backdrop-blur-md border border-white/20 shadow-lg">
+              Launching Soon
+            </span>
           </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: 30, scale: 0.9 }}
+          animate={{ opacity: 1, x: 0, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+          className="relative w-full max-w-[460px] sm:max-w-xl h-[320px] sm:h-[420px] flex-shrink-0"
+        >
+          <Link
+            to="/email"
+            className="block w-full h-full rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 group"
+          >
+            <img
+              src="/images/hero2.png"
+              alt="AI Email Categorizer - Organize your inbox"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            />
+          </Link>
         </motion.div>
       </div>
     </header>

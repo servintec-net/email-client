@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
         />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="canonical" href="https://servintec.net/freewall/privacy-policy" />
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" href="/favicon.ico" />
       </Helmet>
 
       <Navbar />
