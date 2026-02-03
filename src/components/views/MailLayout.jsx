@@ -9,7 +9,7 @@ import NotificationToast from "../common/NotificationToast";
 import { FOLDER_TREE, LABELS_CONFIG } from "../../utils/constants";
 import { formatFullDateTime, getMailboxDisplayLabel } from "../../utils/helper";
 
-export default function MailLayout({
+function MailLayout({
   // Layout
   folderPaneWidth,
   listPaneWidth,
@@ -61,6 +61,8 @@ export default function MailLayout({
   selectedMailboxId,
   handleEmailAction,
   loadEmails,
+  searchQuery,
+  onSearchChange,
   // Preview
   previewEmail,
   replyToEmail,
@@ -210,6 +212,8 @@ export default function MailLayout({
             selectedMailboxId={selectedMailboxId}
             onEmailAction={handleEmailAction}
             onLoadMore={() => loadEmails(true)}
+            searchQuery={searchQuery}
+            onSearchChange={onSearchChange}
           />
         </div>
 
@@ -360,3 +364,5 @@ export default function MailLayout({
     </div>
   );
 }
+
+export default MailLayout;

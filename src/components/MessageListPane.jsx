@@ -5,6 +5,7 @@ import { ICON_BY_NAME } from "../utils/constants";
 
 // Dots only (keeps "Loading" fixed so left position doesn't shift)
 const LOADING_FRAMES = ["Loading.", "Loading..", "Loading..."];
+const SEARCH_DEBOUNCE_MS = 350;
 
 const MessageListPane = React.memo(function MessageListPane({
   selectedFolderPath,
@@ -24,6 +25,8 @@ const MessageListPane = React.memo(function MessageListPane({
   selectedMailboxId,
   onEmailAction, // Callback for email actions (mark read/unread, delete, move)
   onLoadMore, // Callback to load more emails
+  searchQuery = "",
+  onSearchChange,
 }) {
   const folderLabel = useMemo(() => {
     if (listTitle != null && listTitle !== "") return listTitle;
@@ -35,6 +38,29 @@ const MessageListPane = React.memo(function MessageListPane({
   }, [selectedFolderPath, listTitle]);
 
   const iconName = ICON_BY_NAME[folderLabel] || ICON_BY_NAME[String(folderLabel).toLowerCase()] || "folder";
+
+  const [searchInputValue, setSearchInputValue] = useState(searchQuery);
+  const searchDebounceRef = useRef(null);
+  useEffect(() => {
+    setSearchInputValue(searchQuery);
+  }, [searchQuery]);
+  const handleSearchInputChange = useCallback(
+    (e) => {
+      const value = e.target.value;
+      setSearchInputValue(value);
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+      searchDebounceRef.current = setTimeout(() => {
+        onSearchChange?.(value);
+        searchDebounceRef.current = null;
+      }, SEARCH_DEBOUNCE_MS);
+    },
+    [onSearchChange]
+  );
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    };
+  }, []);
 
   // Infinite scroll implementation
   const scrollContainerRef = useRef(null);
@@ -97,6 +123,16 @@ const MessageListPane = React.memo(function MessageListPane({
 
   return (
     <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <style>{`
+        .message-list-search-wrap:focus-within {
+          background: rgba(255,255,255,0.98);
+          border-color: rgba(11,95,255,0.35);
+          box-shadow: 0 0 0 2px rgba(11,95,255,0.12);
+        }
+        .message-list-search-input::placeholder {
+          color: rgba(0,0,0,0.4);
+        }
+      `}</style>
       <div
         style={{
           flexShrink: 0,
@@ -106,48 +142,73 @@ const MessageListPane = React.memo(function MessageListPane({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: 10,
+          gap: 12,
           background: "#fff",
           boxSizing: "border-box",
         }}
       >
-        <div style={{ minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flexShrink: 0 }} title={listTitle ?? selectedFolderPath}>
+          <span
+            className="material-icons-outlined"
+            style={{ fontSize: 18, color: "rgba(0,0,0,0.80)", flexShrink: 0 }}
+            aria-hidden
+          >
+            {iconName}
+          </span>
           <div
+            style={{
+              fontSize: 12.5,
+              fontWeight: 700,
+              color: "rgba(0,0,0,0.78)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              minWidth: 0,
+            }}
+          >
+            {folderLabel}
+          </div>
+        </div>
+        {onSearchChange && (
+          <div
+            className="message-list-search-wrap"
             style={{
               display: "flex",
               alignItems: "center",
               gap: 8,
               minWidth: 0,
+              maxWidth: 240,
+              flexShrink: 1,
+              padding: "6px 12px",
+              borderRadius: 20,
+              background: "rgba(0,0,0,0.06)",
+              border: "1px solid rgba(0,0,0,0.08)",
+              transition: "background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
             }}
-            title={listTitle ?? selectedFolderPath}
           >
-            <span
-              className="material-icons-outlined"
-              style={{
-                fontSize: 18,
-                color: "rgba(0,0,0,0.80)",
-                flexShrink: 0,
-              }}
-              aria-hidden
-            >
-              {iconName}
+            <span className="material-icons-outlined" style={{ fontSize: 18, color: "rgba(0,0,0,0.45)", flexShrink: 0 }} aria-hidden>
+              search
             </span>
-
-            <div
+            <input
+              type="text"
+              value={searchInputValue}
+              onChange={handleSearchInputChange}
+              placeholder="Search in folder..."
+              className="message-list-search-input"
               style={{
-                fontSize: 12.5,
-                fontWeight: 700,
-                color: "rgba(0,0,0,0.78)",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
+                flex: 1,
                 minWidth: 0,
+                padding: 0,
+                fontSize: 13,
+                border: "none",
+                outline: "none",
+                background: "transparent",
+                color: "rgba(0,0,0,0.88)",
               }}
-            >
-              {folderLabel}
-            </div>
+              aria-label="Search emails"
+            />
           </div>
-        </div>
+        )}
       </div>
 
       <div
@@ -193,16 +254,33 @@ const MessageListPane = React.memo(function MessageListPane({
               transform: "translateY(-50px)",
             }}
           >
-            <span
-              className="material-icons-outlined"
-              style={{ fontSize: 48, opacity: 0.5 }}
-            >
-              mail_outline
-            </span>
-            <span style={{ fontWeight: 500 }}>No emails in this folder</span>
-            <span style={{ fontSize: 12, fontWeight: 400 }}>
-              {folderLabel ? `"${folderLabel}" is empty` : "This folder is empty"}
-            </span>
+            {searchQuery && String(searchQuery).trim() ? (
+              <>
+                <span
+                  className="material-icons-outlined"
+                  style={{ fontSize: 48, opacity: 0.5 }}
+                >
+                  search_off
+                </span>
+                <span style={{ fontWeight: 500 }}>No results for this search</span>
+                <span style={{ fontSize: 12, fontWeight: 400 }}>
+                  No emails match &quot;{String(searchQuery).trim()}&quot; in {folderLabel ? `"${folderLabel}"` : "this folder"}. Try a different search term.
+                </span>
+              </>
+            ) : (
+              <>
+                <span
+                  className="material-icons-outlined"
+                  style={{ fontSize: 48, opacity: 0.5 }}
+                >
+                  mail_outline
+                </span>
+                <span style={{ fontWeight: 500 }}>No emails in this folder</span>
+                <span style={{ fontSize: 12, fontWeight: 400 }}>
+                  {folderLabel ? `"${folderLabel}" is empty` : "This folder is empty"}
+                </span>
+              </>
+            )}
           </div>
         )}
         {emails.length > 0 && (

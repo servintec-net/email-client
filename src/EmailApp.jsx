@@ -7,7 +7,6 @@ import {
   WS_BASE,
   LAYOUT_KEYS,
   PANE_LIMITS,
-  TOGGLE_ONLY_PATHS,
   EXPANDED_FOLDERS_DEFAULT,
 } from "./utils/constants";
 import { getJson, setJson } from "./utils/storage";
@@ -137,6 +136,7 @@ function EmailApp() {
 
   const [leftPaneTab, setLeftPaneTab] = useState("folders");
   const [selectedLabel, setSelectedLabel] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const readRequestedRef = useRef(new Set());
   const emailsAbortRef = useRef(null);
@@ -409,7 +409,7 @@ function EmailApp() {
 
     const isLabelsMode = leftPaneTab === "labels" && selectedLabel;
     const isInbox = selectedFolderPath === "Inbox";
-    const aggregateSubfoldersPaths = ["Inbox > Applications", "Inbox > Interviews", "Inbox > Interviews > Interview Request"];
+    const aggregateSubfoldersPaths = ["Inbox > Applications", "Inbox > Interviews", "Inbox > Interviews > Interview Request", "Inbox > Offer"];
     const shouldAggregateSubfolders = !isInbox && aggregateSubfoldersPaths.includes(selectedFolderPath);
     const folderPaths = shouldAggregateSubfolders ? getLeafPathsUnder(FOLDER_TREE, selectedFolderPath) : [];
     const pathsToRequest =
@@ -424,9 +424,12 @@ function EmailApp() {
       pathsToRequest.length > 1
         ? pathsToRequest.map((p) => `folderPath=${encodeURIComponent(p)}`).join("&")
         : `folderPath=${encodeURIComponent(pathsToRequest[0] || selectedFolderPath)}`;
-    const urlParams = isLabelsMode
+    let urlParams = isLabelsMode
       ? `mailboxId=${selectedMailboxId}&category=${encodeURIComponent(selectedLabel)}&top=50&skip=${append ? emailSkip : 0}`
       : `mailboxId=${selectedMailboxId}&${folderParam}&top=50&skip=${append ? emailSkip : 0}`;
+    if (searchQuery && String(searchQuery).trim()) {
+      urlParams += `&q=${encodeURIComponent(String(searchQuery).trim())}`;
+    }
 
     // Reset pagination when loading a new folder/label (not appending)
     if (!append) {
@@ -494,9 +497,12 @@ function EmailApp() {
           pathsToRequest.length > 1
             ? pathsToRequest.map((p) => `folderPath=${encodeURIComponent(p)}`).join("&")
             : `folderPath=${encodeURIComponent(pathsToRequest[0] || selectedFolderPath)}`;
-        const appendParams = isLabelsMode
+        let appendParams = isLabelsMode
           ? `mailboxId=${selectedMailboxId}&category=${encodeURIComponent(selectedLabel)}&top=50&skip=${emailSkip}`
           : `mailboxId=${selectedMailboxId}&${appendFolderParam}&top=50&skip=${emailSkip}`;
+        if (searchQuery && String(searchQuery).trim()) {
+          appendParams += `&q=${encodeURIComponent(String(searchQuery).trim())}`;
+        }
         const res = await fetch(
           `${API_BASE}/emails?${appendParams}`,
           {
@@ -540,7 +546,7 @@ function EmailApp() {
         loadingMoreRef.current = false;
       }
     }
-  }, [authToken, selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab, selectedEmailId, emailSkip, hasMoreEmails, loadingMore, emails]);
+  }, [authToken, selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab, searchQuery, selectedEmailId, emailSkip, hasMoreEmails, loadingMore, emails]);
 
   loadEmailsRef.current = loadEmails;
 
@@ -702,20 +708,20 @@ function EmailApp() {
     }
   }, [previewEmail?.conversationId, authToken, selectedMailboxId]);
 
+  const aggregateSubfoldersPaths = useMemo(
+    () => new Set(["Inbox > Applications", "Inbox > Interviews", "Inbox > Interviews > Interview Request", "Inbox > Offer"]),
+    []
+  );
+
   // ✅ Mark All As Unread (used by FolderTreeView right-click + MessageListPane icon)
   const markAllAsUnread = useCallback(
     async (targetPath) => {
       if (!authToken || !selectedMailboxId || !targetPath) return;
 
-      // folders to process:
-      // - if toggle-only container: process its descendants (and skip known containers)
-      // - otherwise: process just targetPath
       let folderPathsToProcess = [];
-
-      if (TOGGLE_ONLY_PATHS.has(targetPath)) {
-        folderPathsToProcess = allFolderPaths
-          .filter((p) => p === targetPath || p.startsWith(targetPath + " > "))
-          .filter((p) => !TOGGLE_ONLY_PATHS.has(p));
+      if (aggregateSubfoldersPaths.has(targetPath)) {
+        const leafPaths = getLeafPathsUnder(FOLDER_TREE, targetPath);
+        folderPathsToProcess = leafPaths.length > 1 ? [targetPath, ...leafPaths] : leafPaths.length > 0 ? leafPaths : [targetPath];
       } else {
         folderPathsToProcess = [targetPath];
       }
@@ -806,7 +812,7 @@ function EmailApp() {
         await refreshFolderCounts();
       }
     },
-    [authToken, selectedMailboxId, allFolderPaths, selectedFolderPath, refreshFolderCounts]
+    [authToken, selectedMailboxId, aggregateSubfoldersPaths, selectedFolderPath, refreshFolderCounts]
   );
 
   // ✅ Mark All As Read (used by FolderTreeView right-click)
@@ -815,10 +821,9 @@ function EmailApp() {
       if (!authToken || !selectedMailboxId || !targetPath) return;
 
       let folderPathsToProcess = [];
-      if (TOGGLE_ONLY_PATHS.has(targetPath)) {
-        folderPathsToProcess = allFolderPaths
-          .filter((p) => p === targetPath || p.startsWith(targetPath + " > "))
-          .filter((p) => !TOGGLE_ONLY_PATHS.has(p));
+      if (aggregateSubfoldersPaths.has(targetPath)) {
+        const leafPaths = getLeafPathsUnder(FOLDER_TREE, targetPath);
+        folderPathsToProcess = leafPaths.length > 1 ? [targetPath, ...leafPaths] : leafPaths.length > 0 ? leafPaths : [targetPath];
       } else {
         folderPathsToProcess = [targetPath];
       }
@@ -898,7 +903,7 @@ function EmailApp() {
         await refreshFolderCounts();
       }
     },
-    [authToken, selectedMailboxId, allFolderPaths, selectedFolderPath, refreshFolderCounts]
+    [authToken, selectedMailboxId, aggregateSubfoldersPaths, selectedFolderPath, refreshFolderCounts]
   );
 
   // Initialize auth on mount (mailboxes are loaded by the "Reload mailboxes when auth token is available" effect)
@@ -949,7 +954,7 @@ function EmailApp() {
     setEmailSkip(0);
     setLoadingList(true);
     loadEmailsRef.current();
-  }, [authToken, selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab]);
+  }, [authToken, selectedMailboxId, selectedFolderPath, selectedLabel, leftPaneTab, searchQuery]);
 
   // WebSocket: refetch folder counts and/or emails when backend pushes (move to inbox, new mail via cron invalidation)
   const wsRef = useRef(null);
@@ -1214,6 +1219,8 @@ function EmailApp() {
       selectedMailboxId={selectedMailboxId}
       handleEmailAction={handleEmailAction}
       loadEmails={loadEmails}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
       previewEmail={previewEmail}
       replyToEmail={replyToEmail}
       setReplyToEmail={setReplyToEmail}

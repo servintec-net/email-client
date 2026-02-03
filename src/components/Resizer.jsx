@@ -41,12 +41,13 @@ const Resizer = ({ onResize, minWidth = 180, maxWidth = 500, defaultWidth, style
       aria-orientation="vertical"
       onMouseDown={handleMouseDown}
       style={{
-        width: 6,
+        width: 5,
         flexShrink: 0,
         cursor: "col-resize",
-        background: dragging ? "rgba(11,95,255,0.15)" : "rgba(0,0,0,0.06)",
-        borderLeft: "1px solid rgba(0,0,0,0.06)",
-        borderRight: "1px solid rgba(0,0,0,0.06)",
+        background: dragging ? "#dbeafe" : "rgba(241, 245, 249, 1)",
+        borderLeft: dragging ? "1px solid #93c5fd" : "none",
+        borderRight: dragging ? "1px solid #3b82f6" : "1px solid rgba(226, 232, 240, 1)",
+        transition: "background 0.15s ease, border-color 0.15s ease",
         ...styleOverride,
       }}
     />
