@@ -114,6 +114,7 @@ export default function MailLayout({
 
   return (
     <div
+      className="bg-gradient-to-br from-gray-900 via-purple-900 to-black min-h-screen"
       style={{
         fontFamily: "system-ui",
         height: "100vh",
@@ -310,14 +311,14 @@ export default function MailLayout({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: 8,
-                  color: "rgba(0,0,0,0.45)",
+                  color: "rgba(255,255,255,0.85)",
                   fontSize: 14,
                   transform: "translateY(-50px)",
                 }}
               >
-                <span className="material-icons-outlined" style={{ fontSize: 48, opacity: 0.5 }}>visibility</span>
+                <span className="material-icons-outlined" style={{ fontSize: 48, opacity: 0.9 }}>visibility</span>
                 <span style={{ fontWeight: 500 }}>Select an email to preview</span>
-                <span style={{ fontSize: 12, fontWeight: 400 }}>Preview appears here</span>
+                <span style={{ fontSize: 12, fontWeight: 400, color: "rgba(255,255,255,0.65)" }}>Preview appears here</span>
               </div>
             )}
 

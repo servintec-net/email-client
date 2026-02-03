@@ -232,14 +232,15 @@ const ThreadCard = React.memo(function ThreadCard({
             </div>
           )}
 
-          {/* Main content only (no history) */}
+          {/* Main content only (no history) — force dark text so sender inline colors don't mix black/white */}
           {isHtml ? (
             <div
-              style={{ fontSize: 14, lineHeight: 1.55 }}
+              className="thread-email-body"
+              style={{ fontSize: 14, lineHeight: 1.55, color: "rgba(0,0,0,0.9)" }}
               dangerouslySetInnerHTML={{ __html: mainContent }}
             />
           ) : (
-            <pre style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.55 }}>
+            <pre style={{ whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.55, color: "rgba(0,0,0,0.9)" }}>
               {mainContent}
             </pre>
           )}
@@ -326,13 +327,14 @@ const ThreadCard = React.memo(function ThreadCard({
             <>
               {isHtml ? (
                 <div
+                  className="thread-email-body"
                   style={{
                     marginTop: 14,
                     paddingTop: 14,
                     borderTop: "1px solid rgba(0,0,0,0.08)",
                     fontSize: 14,
                     lineHeight: 1.55,
-                    color: "rgba(0,0,0,0.7)",
+                    color: "rgba(0,0,0,0.9)",
                   }}
                   dangerouslySetInnerHTML={{ __html: historyContent }}
                 />

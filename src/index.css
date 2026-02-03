@@ -297,3 +297,12 @@ html:focus-within {
     rgba(168, 85, 247, 0.9)
   );
 }
+
+/* Email thread: force dark text so sender inline colors don't mix black/white on light card */
+.thread-email-body,
+.thread-email-body * {
+  color: rgba(0, 0, 0, 0.9) !important;
+}
+.thread-email-body a {
+  color: #1a73e8 !important;
+}
