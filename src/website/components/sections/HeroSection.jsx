@@ -206,14 +206,14 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      <div className="w-full max-w-7xl relative mx-4 z-10 flex flex-row items-center justify-center gap-8 sm:gap-12">
+      <div className="w-full max-w-7xl relative mx-4 z-10 flex flex-row items-start justify-center gap-8 sm:gap-12">
         <motion.div
           initial={{ opacity: 0, x: 30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-          className="relative w-full max-w-[460px] sm:max-w-xl h-[320px] sm:h-[420px] flex-shrink-0"
+          className="relative w-full max-w-[460px] sm:max-w-xl flex-shrink-0 flex flex-col items-center"
         >
-          <div className="rounded-2xl relative z-10 w-full h-full overflow-hidden bg-white/5 border border-white/10">
+          <div className="rounded-2xl relative z-10 w-full h-[320px] sm:h-[420px] overflow-hidden bg-white/5 border border-white/10">
             <ImageCarousel
               images={["/images/hero1.png"]}
               autoPlay={true}
@@ -224,16 +224,19 @@ const HeroSection = () => {
               Launching Soon
             </span>
           </div>
+          <p className="text-gray-400 text-sm sm:text-base mt-3 text-center px-2 w-full">
+            VPN service coming soon. Secure browsing, anywhere.
+          </p>
         </motion.div>
         <motion.div
           initial={{ opacity: 0, x: 30, scale: 0.9 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="relative w-full max-w-[460px] sm:max-w-xl h-[320px] sm:h-[420px] flex-shrink-0"
+          className="relative w-full max-w-[460px] sm:max-w-xl flex-shrink-0 flex flex-col items-center"
         >
           <Link
             to="/email"
-            className="block w-full h-full rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 group"
+            className="block w-full h-[320px] sm:h-[420px] rounded-2xl overflow-hidden bg-white/5 border border-white/10 hover:border-blue-400/50 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 group"
           >
             <img
               src="/images/hero2.png"
@@ -241,6 +244,9 @@ const HeroSection = () => {
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
           </Link>
+          <p className="text-gray-400 text-sm sm:text-base mt-3 text-center px-2 w-full">
+            AI Email Categorizer — never miss a job reply again.
+          </p>
         </motion.div>
       </div>
     </header>
