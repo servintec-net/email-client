@@ -18,7 +18,7 @@ export default function NoMailboxView({
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        background: "linear-gradient(135deg, rgba(11,95,255,0.02), rgba(226,33,15,0.02))",
+        background: "#f5f5f7",
         overflowY: "auto",
       }}
     >
