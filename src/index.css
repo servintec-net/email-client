@@ -53,6 +53,18 @@
       monospace;
   }
 
+  /* No-mailbox page: light background, dark text (overrides body text-foreground) */
+  .no-mailbox-view,
+  .no-mailbox-view h1,
+  .no-mailbox-view h2,
+  .no-mailbox-view h3,
+  .no-mailbox-view p {
+    color: rgba(0, 0, 0, 0.9) !important;
+  }
+  .no-mailbox-view p {
+    color: rgba(0, 0, 0, 0.6) !important;
+  }
+
   /* Website: dock / nav / cards */
   .navbar-dock {
     position: relative;
