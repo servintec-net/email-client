@@ -1,7 +1,0 @@
-# www.robotstxt.org/
-
-User-agent: *
-Allow: /
-
-# Sitemaps
-Sitemap: https://servintec.net/sitemap.xml
