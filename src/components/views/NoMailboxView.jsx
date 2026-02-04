@@ -37,7 +37,7 @@ export default function NoMailboxView({
           style={{ height: 60, width: "auto", objectFit: "contain" }}
           onError={(e) => { e.target.style.display = "none"; }}
         />
-        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Welcome, {currentUser.username}!</h2>
+        <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: "rgba(0,0,0,0.9)" }}>Welcome, {currentUser.username}!</h2>
         <p style={{ margin: 0, color: "rgba(0,0,0,0.6)", fontSize: 14 }}>
           Connect your Microsoft mailbox to get started.
         </p>
