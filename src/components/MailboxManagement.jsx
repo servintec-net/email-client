@@ -80,6 +80,14 @@ const MailboxManagement = ({
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
           }
+          @keyframes mailbox-mgmt-bg-glow {
+            0%, 100% { background: radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.3) 0%, transparent 50%); }
+            33% { background: radial-gradient(circle at 80% 50%, rgba(147, 51, 234, 0.3) 0%, transparent 50%); }
+            66% { background: radial-gradient(circle at 50% 80%, rgba(59, 130, 246, 0.3) 0%, transparent 50%); }
+          }
+          .mailbox-mgmt-bg-glow {
+            animation: mailbox-mgmt-bg-glow 15s ease-in-out infinite;
+          }
         `}
       </style>
 
@@ -171,13 +179,14 @@ const MailboxManagement = ({
       )}
 
       <div
+        className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-purple-900 to-black"
         style={{
           height: "100vh",
           display: "flex",
           flexDirection: "column",
-          background: "linear-gradient(135deg, rgba(11,95,255,0.02), rgba(226,33,15,0.02))",
         }}
       >
+      <div className="mailbox-mgmt-bg-glow absolute inset-0 opacity-20 pointer-events-none" aria-hidden />
       {/* Header */}
       <div
         style={{
@@ -208,7 +217,7 @@ const MailboxManagement = ({
               arrow_back
             </span>
           </button>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700 }}>Manage Mailboxes</h1>
+          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "rgba(0,0,0,0.9)" }}>Manage Mailboxes</h1>
         </div>
         <button
           onClick={onConnectNew}
@@ -256,14 +265,14 @@ const MailboxManagement = ({
             style={{
               textAlign: "center",
               padding: "60px 20px",
-              color: "rgba(0,0,0,0.6)",
+              color: "rgba(255,255,255,0.95)",
             }}
           >
-            <span className="material-icons-outlined" style={{ fontSize: 64, color: "rgba(0,0,0,0.3)", marginBottom: 16, display: "block" }}>
+            <span className="material-icons-outlined" style={{ fontSize: 64, color: "rgba(255,255,255,0.7)", marginBottom: 16, display: "block" }}>
               mail_outline
             </span>
             <p style={{ fontSize: 16, margin: "0 0 8px 0" }}>No mailboxes connected</p>
-            <p style={{ fontSize: 14, margin: 0 }}>Click "Add Mailbox" to connect your first mailbox</p>
+            <p style={{ fontSize: 14, margin: 0, color: "rgba(255,255,255,0.85)" }}>Click "Add Mailbox" to connect your first mailbox</p>
           </div>
         ) : (
           <div style={{ maxWidth: 800, margin: "0 auto" }}>
