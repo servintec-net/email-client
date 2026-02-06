@@ -62,8 +62,6 @@ export default function HomePage() {
         <meta name="twitter:image" content="https://servintec.net/servintec-logo.png" />
         <meta name="geo.region" content="NP-P1" />
         <meta name="geo.placename" content="USA" />
-        <meta name="geo.position" content="26.6418;87.9927" />
-        <meta name="ICBM" content="26.6418, 87.9927" />
         <link rel="canonical" href="https://servintec.net" />
         <link rel="icon" href="/favicon.ico" />
       </Helmet>
